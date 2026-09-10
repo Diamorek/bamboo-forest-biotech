@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import authRoutes from './routes/auth.js';
 
 dotenv.config();
 
@@ -13,10 +14,13 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Routes
+// Health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Bamboo Forest API is running' });
 });
+
+// Auth routes
+app.use('/api/auth', authRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {
