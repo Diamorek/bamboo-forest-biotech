@@ -1,37 +1,52 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+// 참고용 예시입니다. 기존 App.jsx에 맞게 병합해서 쓰세요.
+// react-router-dom을 쓰고 계시다면 이 useState 방식 대신 라우터로 바꿔드릴 수 있어요.
+import { useState } from 'react'
+import './styles/theme.css'
+import LoginForm from './components/LoginForm'
+import SignupForm from './components/SignupForm'
+import BoardList from './components/BoardList'
+import PostDetail from './components/PostDetail'
 
 function App() {
-  const [status, setStatus] = useState('Connecting...')
+  // 'login' | 'signup' | 'board' | 'post'
+  const [view, setView] = useState('board')
+  const [selectedPostId, setSelectedPostId] = useState(null)
+  const [user, setUser] = useState(null)
 
-  useEffect(() => {
-    const checkAPI = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/health`)
-        const data = await response.json()
-        setStatus(`✅ ${data.message}`)
-      } catch (error) {
-        setStatus('❌ API Connection Error')
-      }
-    }
-    checkAPI()
-  }, [])
+  const handleAuthSuccess = (loggedInUser) => {
+    setUser(loggedInUser)
+    setView('board')
+  }
+
+  if (view === 'login') {
+    return (
+      <LoginForm
+        onLoginSuccess={handleAuthSuccess}
+        onNavigateToSignup={() => setView('signup')}
+      />
+    )
+  }
+
+  if (view === 'signup') {
+    return (
+      <SignupForm
+        onSignupSuccess={handleAuthSuccess}
+        onNavigateToLogin={() => setView('login')}
+      />
+    )
+  }
+
+  if (view === 'post') {
+    return <PostDetail postId={selectedPostId} onBack={() => setView('board')} />
+  }
 
   return (
-    <div className="App">
-      <h1>🎋 Bamboo Forest Biotech</h1>
-      <p>바이오/제약 분야 익명 커뮤니티</p>
-      <div className="status">{status}</div>
-      <div className="coming-soon">
-        <h2>🚀 Coming Soon</h2>
-        <ul>
-          <li>익명 게시판</li>
-          <li>구직/이직 정보 공유</li>
-          <li>실험 방법 토론</li>
-          <li>핫 글 순위</li>
-        </ul>
-      </div>
-    </div>
+    <BoardList
+      onSelectPost={(id) => {
+        setSelectedPostId(id)
+        setView('post')
+      }}
+    />
   )
 }
 
