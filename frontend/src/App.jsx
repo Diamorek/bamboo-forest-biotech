@@ -1,14 +1,15 @@
 // 참고용 예시입니다. 기존 App.jsx에 맞게 병합해서 쓰세요.
-// react-router-dom을 쓰고 계시다면 이 useState 방식 대신 라우터로 바꿔드릴 수 있어요.
 import { useState } from 'react'
 import './styles/theme.css'
+import TopNav from './components/TopNav'
 import LoginForm from './components/LoginForm'
 import SignupForm from './components/SignupForm'
 import BoardList from './components/BoardList'
 import PostDetail from './components/PostDetail'
+import BenchTimerSection from './components/BenchTimerSection'
 
 function App() {
-  // 'login' | 'signup' | 'board' | 'post'
+  // 'login' | 'signup' | 'board' | 'post' | 'timer'
   const [view, setView] = useState('board')
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [user, setUser] = useState(null)
@@ -18,6 +19,7 @@ function App() {
     setView('board')
   }
 
+  // 로그인/회원가입은 TopNav 없이 전체 화면으로
   if (view === 'login') {
     return (
       <LoginForm
@@ -26,7 +28,6 @@ function App() {
       />
     )
   }
-
   if (view === 'signup') {
     return (
       <SignupForm
@@ -36,17 +37,33 @@ function App() {
     )
   }
 
-  if (view === 'post') {
-    return <PostDetail postId={selectedPostId} onBack={() => setView('board')} />
-  }
+  // 게시판/게시글/타이머는 같은 TopNav를 공유
+  // (게시글 상세 화면에서도 탭은 '게시판'이 눌린 상태로 보이게)
+  const activeTab = view === 'timer' ? 'timer' : 'board'
 
   return (
-    <BoardList
-      onSelectPost={(id) => {
-        setSelectedPostId(id)
-        setView('post')
-      }}
-    />
+    <>
+      <TopNav active={activeTab} onNavigate={setView} />
+
+      {view === 'post' && (
+        <PostDetail postId={selectedPostId} onBack={() => setView('board')} />
+      )}
+
+      {view === 'board' && (
+        <BoardList
+          onSelectPost={(id) => {
+            setSelectedPostId(id)
+            setView('post')
+          }}
+        />
+      )}
+
+      {view === 'timer' && (
+        <div className="board-wrap">
+          <BenchTimerSection />
+        </div>
+      )}
+    </>
   )
 }
 
