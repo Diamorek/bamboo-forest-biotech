@@ -4,6 +4,9 @@
    import './styles/theme.css'
    =================================================================== */
 
+/* 한글 웹폰트 — Pretendard (CDN) */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
 :root {
   /* 배경: 밤의 대나무숲 — 짙은 녹흑색 */
   --bg: #10160f;
@@ -41,9 +44,20 @@
   box-sizing: border-box;
 }
 
+/* Vite 기본 템플릿(index.css)의 라이트 모드 배경/중앙정렬 flex와 충돌하는 걸 방지 —
+   !important로 확실히 이깁니다. */
+html,
+body,
+#root {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  min-height: 100vh;
+}
+
 body {
-  background: var(--bg);
-  color: var(--text);
+  display: block !important;
+  place-items: unset !important;
+  margin: 0;
   font-family: var(--font-body);
 }
 
@@ -145,9 +159,4 @@ body {
   border-radius: var(--radius-sm);
   padding: 10px 12px;
   font-size: 13px;
-}
-html, body, #root {
-  background: var(--bg) !important;
-  color: var(--text) !important;
-  min-height: 100vh;
 }
