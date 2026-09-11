@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import BambooIcon from './BambooIcon'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -80,7 +81,10 @@ function BoardList({ onSelectPost }) {
   return (
     <div className="board-wrap">
       <header className="board-header">
-        <h1 className="board-title">🎋 대나무숲</h1>
+        <h1 className="board-title">
+          <BambooIcon className="board-title-icon" />
+          대나무숲
+        </h1>
         <p className="board-subtitle">바이오/제약 익명 게시판</p>
       </header>
 
