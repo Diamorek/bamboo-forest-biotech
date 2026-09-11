@@ -19,8 +19,8 @@
 }
 
 .auth-mark {
-  font-size: 28px;
-  margin-bottom: 12px;
+  color: var(--bamboo-bright);
+  margin-bottom: 14px;
 }
 
 .auth-title {
