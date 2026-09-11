@@ -146,3 +146,8 @@ body {
   padding: 10px 12px;
   font-size: 13px;
 }
+html, body, #root {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  min-height: 100vh;
+}
