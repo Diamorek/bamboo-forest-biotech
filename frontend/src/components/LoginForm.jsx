@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import BambooIcon from './BambooIcon'
 import './AuthForm.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -49,7 +50,7 @@ function LoginForm({ onLoginSuccess, onNavigateToSignup }) {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <div className="auth-mark">🎋</div>
+        <BambooIcon size={32} className="auth-mark" />
         <h1 className="auth-title">다시 숲으로</h1>
         <p className="auth-subtitle">닉네임 뒤에 숨어, 하고 싶던 이야기를 나눠요</p>
 
