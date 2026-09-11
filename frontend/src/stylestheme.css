@@ -1,210 +1,148 @@
-.board-wrap {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 40px 20px 80px;
+/* ===================================================================
+   Bamboo Forest Biotech — 디자인 토큰
+   main.jsx (또는 App.jsx) 최상단에서 한 번만 import 하세요:
+   import './styles/theme.css'
+   =================================================================== */
+
+:root {
+  /* 배경: 밤의 대나무숲 — 짙은 녹흑색 */
+  --bg: #10160f;
+  --bg-panel: #161d15;
+  --bg-panel-raised: #1c251b;
+
+  /* 경계선: 대나무 마디 색 */
+  --border: #2a362a;
+  --border-strong: #3c4b3a;
+
+  /* 텍스트 */
+  --text: #e8ede3;
+  --text-dim: #9aab92;
+  --text-faint: #6c7d67;
+
+  /* 대나무 그린 — 포인트 컬러 */
+  --bamboo-core: #4f7a52;
+  --bamboo-bright: #93c76a;
+  --bamboo-deep: #355a3c;
+
+  /* 상태 */
+  --danger: #c97b6b;
+  --danger-bg: rgba(201, 123, 107, 0.12);
+
+  /* 타이포그래피 */
+  --font-body: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, sans-serif;
+
+  /* 형태: 카드형 둥근 그림자 대신 직선적인 절단면 — 대나무 마디를 자른 단면 느낌 */
+  --radius-sm: 2px;
+  --radius-md: 3px;
 }
 
-.board-header {
-  margin-bottom: 24px;
+* {
+  box-sizing: border-box;
 }
 
-.board-title {
-  font-size: 26px;
-  font-weight: 700;
-  margin: 0 0 4px;
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
 }
 
-.board-subtitle {
-  font-size: 14px;
-  color: var(--text-dim);
+/* ---------------------------------------------------------------
+   대나무 마디 디바이더 — 리스트 구분선을 대체하는 이 프로젝트만의 구조 장치.
+   (직선 + 중앙의 작은 마디 점) 게시글 리스트, 섹션 구분 등에 재사용.
+   --------------------------------------------------------------- */
+.bamboo-divider {
+  position: relative;
+  height: 1px;
+  background: var(--border);
   margin: 0;
 }
 
-.category-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
+.bamboo-divider::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  transform: translate(-50%, -50%);
 }
 
-.category-chip {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  border-radius: var(--radius-sm);
-  padding: 7px 14px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-
-.category-chip:hover {
-  border-color: var(--border-strong);
-}
-
-.category-chip.is-active {
-  background: var(--bamboo-deep);
-  border-color: var(--bamboo-core);
-  color: var(--bamboo-bright);
-}
-
-.board-empty {
-  padding: 48px 0;
-  text-align: center;
-  color: var(--text-faint);
-  font-size: 14px;
-}
-
-.post-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.post-row {
-  width: 100%;
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  background: none;
-  border: none;
-  text-align: left;
-  padding: 20px 4px;
-  cursor: pointer;
-}
-
-.post-row:hover .post-title {
-  color: var(--bamboo-bright);
-}
-
-.post-category-tag {
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--bamboo-bright);
-  background: var(--bamboo-deep);
-  border-radius: var(--radius-sm);
-  padding: 4px 8px;
-  white-space: nowrap;
-}
-
-.post-row-main {
-  min-width: 0;
-}
-
-.post-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 6px;
-  color: var(--text);
-  transition: color 0.15s ease;
-}
-
-.post-preview {
-  font-size: 14px;
-  color: var(--text-dim);
-  margin: 0 0 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-}
-
-.post-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-faint);
-}
-
-.post-meta-spacer {
-  flex: 1;
-}
-
-/* ---------- 상세 화면 ---------- */
-
-.back-link {
-  display: inline-block;
-  margin-bottom: 20px;
-}
-
-.post-detail {
-  padding-top: 4px;
-}
-
-.post-detail-title {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 12px 0 10px;
-}
-
-.post-detail-content {
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--text);
-  margin: 20px 0 24px;
-  white-space: pre-wrap;
-}
-
-.like-btn {
-  background: var(--bg-panel-raised);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  border-radius: var(--radius-sm);
-  padding: 9px 16px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.like-btn.is-liked {
-  border-color: var(--bamboo-core);
-  color: var(--bamboo-bright);
-}
-
-.section-divider {
-  margin: 32px 0;
-}
-
-.comments-title {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 16px;
-}
-
-.comment-list {
-  list-style: none;
-  margin: 0 0 24px;
-  padding: 0;
-}
-
-.comment-item {
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.comment-item:last-child {
-  border-bottom: none;
-}
-
-.comment-content {
-  font-size: 14px;
-  color: var(--text);
-  margin: 6px 0 0;
-  line-height: 1.5;
-}
-
-.comment-form {
+/* 공용 인풋 */
+.field {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
-.comment-form textarea {
-  resize: vertical;
+.field label {
+  font-size: 13px;
+  color: var(--text-dim);
 }
 
-.comment-form .btn-primary {
-  align-self: flex-end;
+.field input,
+.field textarea {
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--bamboo-core);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--text-faint);
+}
+
+/* 공용 버튼 */
+.btn-primary {
+  background: var(--bamboo-core);
+  color: #0d130c;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: var(--bamboo-bright);
+}
+
+.btn-primary:disabled {
+  background: var(--border-strong);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--bamboo-bright);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.error-banner {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
 }
