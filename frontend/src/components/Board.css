@@ -1,25 +1,7 @@
 .board-wrap {
   max-width: 640px;
   margin: 0 auto;
-  padding: 56px 28px 80px;
-}
-
-.board-header {
-  margin-bottom: 32px;
-}
-
-.board-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 26px;
-  font-weight: 700;
-  margin: 0 0 6px;
-}
-
-.board-title-icon {
-  color: var(--bamboo-bright);
-  flex-shrink: 0;
+  padding: 24px 28px 80px;
 }
 
 .board-subtitle {
