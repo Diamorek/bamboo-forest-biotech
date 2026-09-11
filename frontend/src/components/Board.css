@@ -1,17 +1,25 @@
 .board-wrap {
   max-width: 640px;
   margin: 0 auto;
-  padding: 40px 20px 80px;
+  padding: 56px 28px 80px;
 }
 
 .board-header {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .board-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 26px;
   font-weight: 700;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
+}
+
+.board-title-icon {
+  color: var(--bamboo-bright);
+  flex-shrink: 0;
 }
 
 .board-subtitle {
@@ -63,13 +71,11 @@
 
 .post-row {
   width: 100%;
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  display: block;
   background: none;
   border: none;
   text-align: left;
-  padding: 20px 4px;
+  padding: 22px 8px;
   cursor: pointer;
 }
 
@@ -77,14 +83,24 @@
   color: var(--bamboo-bright);
 }
 
+/* 필터 칩(알약 형태)과 겹쳐 보이지 않도록, 태그는 배경 없이
+   점 + 라벨로 가볍게 표시 — 위계를 분리하는 구조 장치 */
 .post-category-tag {
-  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
-  color: var(--bamboo-bright);
-  background: var(--bamboo-deep);
-  border-radius: var(--radius-sm);
-  padding: 4px 8px;
+  color: var(--text-faint);
   white-space: nowrap;
+  margin-bottom: 8px;
+}
+
+.post-category-tag::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--bamboo-bright);
 }
 
 .post-row-main {
