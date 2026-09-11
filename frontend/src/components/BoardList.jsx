@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import BambooIcon from './BambooIcon'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
