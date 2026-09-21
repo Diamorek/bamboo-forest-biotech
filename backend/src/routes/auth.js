@@ -1,105 +1,89 @@
+// backend/src/routes/auth.js
 import express from 'express';
-import bcryptjs from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import pool from '../db.js';
 
 const router = express.Router();
 
-// 임시 사용자 저장소 (실제로는 데이터베이스 사용)
-const users = [];
-
-// 회원가입
 router.post('/signup', async (req, res) => {
+  const { email, password, username } = req.body;
+
+  if (!email || !password || !username) {
+    return res.status(400).json({ error: '이메일, 비밀번호, 닉네임을 모두 입력해주세요.' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ error: '비밀번호는 8자 이상이어야 합니다.' });
+  }
+
   try {
-    const { email, password, username } = req.body;
-
-    // 입력값 검증
-    if (!email || !password || !username) {
-      return res.status(400).json({ error: 'Email, password, username are required' });
+    const existing = await pool.query(
+      'SELECT id FROM users WHERE email = $1 OR username = $2',
+      [email, username]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: '이미 사용 중인 이메일 또는 닉네임입니다.' });
     }
 
-    // 이미 존재하는 이메일 확인
-    const existingUser = users.find(u => u.email === email);
-    if (existingUser) {
-      return res.status(409).json({ error: 'Email already exists' });
-    }
+    const passwordHash = await bcrypt.hash(password, 10);
 
-    // 비밀번호 암호화
-    const hashedPassword = await bcryptjs.hash(password, 10);
+    const result = await pool.query(
+      `INSERT INTO users (email, username, password_hash)
+       VALUES ($1, $2, $3)
+       RETURNING id, email, username, created_at`,
+      [email, username, passwordHash]
+    );
 
-    // 사용자 생성
-    const user = {
-      id: Date.now().toString(),
-      email,
-      username,
-      password: hashedPassword,
-      createdAt: new Date()
-    };
-
-    users.push(user);
-
-    // JWT 토큰 생성
+    const user = result.rows[0];
     const token = jwt.sign(
-      { id: user.id, email: user.email, username: user.username },
-      process.env.JWT_SECRET || 'default_secret',
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    res.status(201).json({
-      message: 'Signup successful',
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username
-      }
-    });
-  } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ error: 'Signup failed' });
+    res.status(201).json({ token, user });
+  } catch (err) {
+    console.error('Signup error:', err);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
 
-// 로그인
 router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요.' });
+  }
+
   try {
-    const { email, password } = req.body;
+    const result = await pool.query(
+      'SELECT id, email, username, password_hash FROM users WHERE email = $1',
+      [email]
+    );
+    const user = result.rows[0];
 
-    // 입력값 검증
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    // 사용자 찾기
-    const user = users.find(u => u.email === email);
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
     }
 
-    // 비밀번호 확인
-    const isPasswordValid = await bcryptjs.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
     }
 
-    // JWT 토큰 생성
     const token = jwt.sign(
-      { id: user.id, email: user.email, username: user.username },
-      process.env.JWT_SECRET || 'default_secret',
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     res.json({
-      message: 'Login successful',
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username
-      }
+      user: { id: user.id, email: user.email, username: user.username },
     });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
 
