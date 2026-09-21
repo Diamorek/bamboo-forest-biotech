@@ -7,6 +7,20 @@ import SignupForm from './components/SignupForm'
 import BoardList from './components/BoardList'
 import PostDetail from './components/PostDetail'
 import BenchTimerSection from './components/BenchTimerSection'
+import SignupForm from './components/SignupForm';
+import LoginForm from './components/LoginForm';
+
+function App() {
+  return (
+    <div>
+      <SignupForm />
+      <hr />
+      <LoginForm />
+    </div>
+  );
+}
+
+export default App;
 
 function App() {
   // 'login' | 'signup' | 'board' | 'post' | 'timer'
