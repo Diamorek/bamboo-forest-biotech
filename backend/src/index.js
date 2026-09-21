@@ -8,9 +8,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const authRoutes = require('./routes/auth')
-  app.use('/api/auth', authRoutes);
-
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173'
