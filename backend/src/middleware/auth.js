@@ -1,20 +1,22 @@
+// backend/src/middleware/auth.js
 import jwt from 'jsonwebtoken';
 
-// JWT 토큰 검증 미들웨어
-export const verifyToken = (req, res, next) => {
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: '인증 토큰이 없습니다.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
   try {
-    const token = req.headers.authorization?.split(' ')[1]; // "Bearer token" 형식
-
-    if (!token) {
-      return res.status(401).json({ error: 'Token is required' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid or expired token' });
+  } catch (err) {
+    return res.status(401).json({ error: '유효하지 않거나 만료된 토큰입니다.' });
   }
-};
+}
 
-export default verifyToken;
+export default authMiddleware;
