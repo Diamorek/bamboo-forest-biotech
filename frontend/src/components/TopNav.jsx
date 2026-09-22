@@ -1,11 +1,6 @@
 import BambooIcon from './BambooIcon'
 import './TopNav.css'
 
-/**
- * 로고 + 탭 네비게이션. 로그인/회원가입 화면 제외하고 항상 위에 떠 있어요.
- * @param {'board'|'timer'} active
- * @param {(view: 'board'|'timer') => void} onNavigate
- */
 function TopNav({ active, onNavigate }) {
   return (
     <header className="top-nav">
@@ -29,6 +24,12 @@ function TopNav({ active, onNavigate }) {
           onClick={() => onNavigate('timer')}
         >
           🧪 타이머
+        </button>
+        <button
+          className="top-nav-tab"
+          onClick={() => onNavigate('login')}
+        >
+          로그인
         </button>
       </nav>
     </header>
