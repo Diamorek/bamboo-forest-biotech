@@ -1,7 +1,7 @@
 import BambooIcon from './BambooIcon'
 import './TopNav.css'
 
-function TopNav({ active, onNavigate }) {
+function TopNav({ active, onNavigate, user, onLogout }) {
   return (
     <header className="top-nav">
       <div className="top-nav-brand">
@@ -25,12 +25,16 @@ function TopNav({ active, onNavigate }) {
         >
           🧪 타이머
         </button>
-        <button
-          className="top-nav-tab"
-          onClick={() => onNavigate('login')}
-        >
-          로그인
-        </button>
+
+        {user ? (
+          <button className="top-nav-tab" onClick={onLogout}>
+            로그아웃
+          </button>
+        ) : (
+          <button className="top-nav-tab" onClick={() => onNavigate('login')}>
+            로그인
+          </button>
+        )}
       </nav>
     </header>
   )
