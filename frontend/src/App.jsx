@@ -17,6 +17,12 @@ function App() {
     setView('board')
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('bfb_token')
+    setUser(null)
+    setView('board')
+  }
+
   if (view === 'login') {
     return (
       <LoginForm
@@ -38,7 +44,12 @@ function App() {
 
   return (
     <>
-      <TopNav active={activeTab} onNavigate={setView} />
+      <TopNav
+        active={activeTab}
+        onNavigate={setView}
+        user={user}
+        onLogout={handleLogout}
+      />
 
       {view === 'post' && (
         <PostDetail postId={selectedPostId} onBack={() => setView('board')} />
