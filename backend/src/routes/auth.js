@@ -10,10 +10,10 @@ router.post('/signup', async (req, res) => {
   const { email, password, username } = req.body;
 
   if (!email || !password || !username) {
-    return res.status(400).json({ error: '이메일, 비밀번호, 닉네임을 모두 입력해주세요.' });
+    return res.status(400).json({ message: '이메일, 비밀번호, 닉네임을 모두 입력해주세요.' });
   }
   if (password.length < 8) {
-    return res.status(400).json({ error: '비밀번호는 8자 이상이어야 합니다.' });
+    return res.status(400).json({ message: '비밀번호는 8자 이상이어야 합니다.' });
   }
 
   try {
@@ -22,7 +22,7 @@ router.post('/signup', async (req, res) => {
       [email, username]
     );
     if (existing.rows.length > 0) {
-      return res.status(409).json({ error: '이미 사용 중인 이메일 또는 닉네임입니다.' });
+      return res.status(409).json({ message: '이미 사용 중인 이메일 또는 닉네임입니다.' });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -44,7 +44,7 @@ router.post('/signup', async (req, res) => {
     res.status(201).json({ token, user });
   } catch (err) {
     console.error('Signup error:', err);
-    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
 
@@ -52,7 +52,7 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요.' });
+    return res.status(400).json({ message: '이메일과 비밀번호를 입력해주세요.' });
   }
 
   try {
@@ -63,12 +63,12 @@ router.post('/login', async (req, res) => {
     const user = result.rows[0];
 
     if (!user) {
-      return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+      return res.status(401).json({ message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+      return res.status(401).json({ message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
     }
 
     const token = jwt.sign(
@@ -83,7 +83,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
 
