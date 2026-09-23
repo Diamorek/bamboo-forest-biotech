@@ -48,8 +48,9 @@ const MOCK_POSTS = [
 /**
  * 게시판 목록
  * @param {(postId: number|string) => void} onSelectPost - 글 클릭 시 호출 (App에서 상세 화면으로 전환)
+ * @param {() => void} onWriteClick - 글쓰기 버튼 클릭 시 호출
  */
-function BoardList({ onSelectPost }) {
+function BoardList({ onSelectPost, onWriteClick }) {
   const [posts, setPosts] = useState([])
   const [activeCategory, setActiveCategory] = useState('all')
   const [loading, setLoading] = useState(true)
@@ -121,6 +122,10 @@ function BoardList({ onSelectPost }) {
           ))}
         </ul>
       )}
+
+      <button type="button" className="write-fab" onClick={onWriteClick}>
+        ✏️ 글쓰기
+      </button>
     </div>
   )
 }
