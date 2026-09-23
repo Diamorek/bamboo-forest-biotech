@@ -1,3 +1,4 @@
+// 참고용 예시입니다. 기존 App.jsx에 맞게 병합해서 쓰세요.
 import { useState } from 'react'
 import './styles/theme.css'
 import TopNav from './components/TopNav'
@@ -5,9 +6,11 @@ import LoginForm from './components/LoginForm'
 import SignupForm from './components/SignupForm'
 import BoardList from './components/BoardList'
 import PostDetail from './components/PostDetail'
+import PostForm from './components/PostForm'
 import BenchTimerSection from './components/BenchTimerSection'
 
 function App() {
+  // 'login' | 'signup' | 'board' | 'post' | 'write' | 'timer'
   const [view, setView] = useState('board')
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [user, setUser] = useState(null)
@@ -17,12 +20,13 @@ function App() {
     setView('board')
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('bfb_token')
-    setUser(null)
-    setView('board')
+  // "글쓰기" 버튼: 로그인 안 돼있으면 로그인 화면으로 먼저 보냄
+  const handleWriteClick = () => {
+    const token = localStorage.getItem('bfb_token')
+    setView(token ? 'write' : 'login')
   }
 
+  // 로그인/회원가입은 TopNav 없이 전체 화면으로
   if (view === 'login') {
     return (
       <LoginForm
@@ -40,16 +44,21 @@ function App() {
     )
   }
 
+  if (view === 'write') {
+    return (
+      <PostForm
+        onPostCreated={() => setView('board')}
+        onCancel={() => setView('board')}
+      />
+    )
+  }
+
+  // 게시판/게시글/타이머는 같은 TopNav를 공유
   const activeTab = view === 'timer' ? 'timer' : 'board'
 
   return (
     <>
-      <TopNav
-        active={activeTab}
-        onNavigate={setView}
-        user={user}
-        onLogout={handleLogout}
-      />
+      <TopNav active={activeTab} onNavigate={setView} />
 
       {view === 'post' && (
         <PostDetail postId={selectedPostId} onBack={() => setView('board')} />
@@ -61,6 +70,7 @@ function App() {
             setSelectedPostId(id)
             setView('post')
           }}
+          onWriteClick={handleWriteClick}
         />
       )}
 
