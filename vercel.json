@@ -4,11 +4,22 @@
   "rewrites": [
     {
       "source": "/google0b764e8287a32c1b.html",
-      "destination": "/google0b764e8287a32c1b.html"
+      "destination": "https://google.com"
     },
     {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/google0b764e8287a32c1b.html",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/html"
+        }
+      ]
     }
   ]
 }
