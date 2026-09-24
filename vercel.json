@@ -3,6 +3,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/google0b764e8287a32c1b.html",
+      "destination": "/google0b764e8287a32c1b.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
