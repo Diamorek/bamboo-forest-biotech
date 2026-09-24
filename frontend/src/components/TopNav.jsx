@@ -14,7 +14,7 @@ function TopNav({ active, onNavigate, username, onLogout }) {
       <div className="top-nav-brand">
         <BambooIcon size={26} className="top-nav-icon" />
         <div>
-          <h1 className="top-nav-title">대나무숲</h1>
+          <h1 className="top-nav-title">바이오대나무숲</h1>
           <p className="top-nav-subtitle">바이오/제약 익명 커뮤니티</p>
         </div>
       </div>
