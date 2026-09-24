@@ -7,10 +7,11 @@ import SignupForm from './components/SignupForm'
 import BoardList from './components/BoardList'
 import PostDetail from './components/PostDetail'
 import PostForm from './components/PostForm'
+import SettingsForm from './components/SettingsForm'
 import BenchTimerSection from './components/BenchTimerSection'
 
 function App() {
-  // 'login' | 'signup' | 'board' | 'post' | 'write' | 'timer'
+  // 'login' | 'signup' | 'board' | 'post' | 'write' | 'timer' | 'settings'
   const [view, setView] = useState('board')
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [user, setUser] = useState(null)
@@ -51,6 +52,10 @@ function App() {
         onCancel={() => setView('board')}
       />
     )
+  }
+
+  if (view === 'settings') {
+    return <SettingsForm onBack={() => setView('board')} />
   }
 
   // 게시판/게시글/타이머는 같은 TopNav를 공유
