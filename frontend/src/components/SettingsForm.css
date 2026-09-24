@@ -1,0 +1,8 @@
+.success-banner {
+  background: rgba(147, 199, 106, 0.12);
+  color: var(--bamboo-bright);
+  border: 1px solid var(--bamboo-core);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+}
