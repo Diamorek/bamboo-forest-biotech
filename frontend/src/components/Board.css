@@ -144,9 +144,37 @@
 
 /* ---------- 상세 화면 ---------- */
 
+.post-detail-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
 .back-link {
   display: inline-block;
   margin-bottom: 20px;
+}
+
+/* 상세 화면에서는 .post-detail-top의 flex 정렬을 쓰므로 기본 margin 제거 */
+.post-detail-top .back-link {
+  margin-bottom: 0;
+}
+
+.post-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.post-delete-btn {
+  color: var(--danger);
+}
+
+.post-action-error {
+  margin-bottom: 16px;
 }
 
 .post-detail {
