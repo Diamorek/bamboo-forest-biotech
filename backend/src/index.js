@@ -3,6 +3,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import postRoutes from './routes/posts.js';
+import userRoutes from './routes/users.js';
+
+// ...
+app.use('/api/users', userRoutes);
 
 dotenv.config();
 
@@ -35,3 +39,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🌿 Bamboo Forest API running on http://localhost:${PORT}`);
 });
+
+
