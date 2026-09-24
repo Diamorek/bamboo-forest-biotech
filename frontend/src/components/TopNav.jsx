@@ -1,7 +1,12 @@
 import BambooIcon from './BambooIcon'
 import './TopNav.css'
 
-function TopNav({ active, onNavigate, user, onLogout }) {
+/**
+ * 로고 + 탭 네비게이션. 로그인/회원가입 화면 제외하고 항상 위에 떠 있어요.
+ * @param {'board'|'timer'} active
+ * @param {(view: 'board'|'timer'|'settings') => void} onNavigate
+ */
+function TopNav({ active, onNavigate }) {
   return (
     <header className="top-nav">
       <div className="top-nav-brand">
@@ -12,30 +17,32 @@ function TopNav({ active, onNavigate, user, onLogout }) {
         </div>
       </div>
 
-      <nav className="top-nav-tabs">
-        <button
-          className={`top-nav-tab ${active === 'board' ? 'is-active' : ''}`}
-          onClick={() => onNavigate('board')}
-        >
-          게시판
-        </button>
-        <button
-          className={`top-nav-tab ${active === 'timer' ? 'is-active' : ''}`}
-          onClick={() => onNavigate('timer')}
-        >
-          🧪 타이머
-        </button>
+      <div className="top-nav-right">
+        <nav className="top-nav-tabs">
+          <button
+            className={`top-nav-tab ${active === 'board' ? 'is-active' : ''}`}
+            onClick={() => onNavigate('board')}
+          >
+            게시판
+          </button>
+          <button
+            className={`top-nav-tab ${active === 'timer' ? 'is-active' : ''}`}
+            onClick={() => onNavigate('timer')}
+          >
+            🧪 타이머
+          </button>
+        </nav>
 
-        {user ? (
-          <button className="top-nav-tab" onClick={onLogout}>
-            로그아웃
-          </button>
-        ) : (
-          <button className="top-nav-tab" onClick={() => onNavigate('login')}>
-            로그인
-          </button>
-        )}
-      </nav>
+        <button
+          type="button"
+          className="top-nav-settings"
+          onClick={() => onNavigate('settings')}
+          aria-label="설정"
+          title="설정"
+        >
+          ⚙️
+        </button>
+      </div>
     </header>
   )
 }
