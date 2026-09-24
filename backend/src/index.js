@@ -5,9 +5,6 @@ import authRoutes from './routes/auth.js';
 import postRoutes from './routes/posts.js';
 import userRoutes from './routes/users.js';
 
-// ...
-app.use('/api/users', userRoutes);
-
 dotenv.config();
 
 const app = express();
@@ -30,6 +27,9 @@ app.use('/api/auth', authRoutes);
 // Post routes
 app.use('/api/posts', postRoutes);
 
+// User routes
+app.use('/api/users', userRoutes);
+
 // Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -39,5 +39,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🌿 Bamboo Forest API running on http://localhost:${PORT}`);
 });
-
-
