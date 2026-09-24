@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getToken, getUser, isAdmin } from '../utils/auth'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -23,12 +24,19 @@ const MOCK_POST = {
  * 게시글 상세
  * @param {number|string} postId
  * @param {() => void} onBack - 목록으로 돌아가기
+ * @param {(post: object) => void} onEditClick - 수정 버튼 클릭 시 호출 (현재 글 데이터와 함께)
+ * @param {(postId: number|string) => void} onDeleted - 삭제 성공 시 호출 (App에서 목록으로 이동)
  */
-function PostDetail({ postId, onBack }) {
+function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [liked, setLiked] = useState(false)
   const [commentText, setCommentText] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [reported, setReported] = useState(false)
+
+  const currentUser = getUser()
+  const admin = isAdmin()
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -66,6 +74,49 @@ function PostDetail({ postId, onBack }) {
     setCommentText('')
   }
 
+  const handleDelete = async () => {
+    const confirmed = window.confirm('정말 삭제할까요? 되돌릴 수 없어요.')
+    if (!confirmed) return
+
+    const token = getToken()
+    setActionError('')
+    try {
+      const response = await fetch(`${API_URL}/api/posts/${postId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.message || data.error || '삭제에 실패했어요.')
+      }
+      onDeleted?.(postId)
+    } catch (err) {
+      setActionError(err.message || '삭제 중 문제가 생겼어요.')
+    }
+  }
+
+  const handleReport = async () => {
+    const token = getToken()
+    if (!token) {
+      setActionError('신고하려면 로그인이 필요해요.')
+      return
+    }
+    setActionError('')
+    try {
+      const response = await fetch(`${API_URL}/api/posts/${postId}/report`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.message || data.error || '신고 접수에 실패했어요.')
+      }
+      setReported(true)
+    } catch (err) {
+      setActionError(err.message || '신고 중 문제가 생겼어요.')
+    }
+  }
+
   if (loading) {
     return (
       <div className="board-wrap">
@@ -76,11 +127,36 @@ function PostDetail({ postId, onBack }) {
 
   if (!post) return null
 
+  const isOwner = currentUser?.username && currentUser.username === post.author
+  const canManage = isOwner || admin
+
   return (
     <div className="board-wrap">
-      <button className="btn-text back-link" onClick={onBack}>
-        ← 목록으로
-      </button>
+      <div className="post-detail-top">
+        <button className="btn-text back-link" onClick={onBack}>
+          ← 목록으로
+        </button>
+
+        <div className="post-detail-actions">
+          {canManage && isOwner && (
+            <button type="button" className="btn-text" onClick={() => onEditClick?.(post)}>
+              수정
+            </button>
+          )}
+          {canManage && (
+            <button type="button" className="btn-text post-delete-btn" onClick={handleDelete}>
+              삭제{admin && !isOwner ? ' (운영자)' : ''}
+            </button>
+          )}
+          {!isOwner && (
+            <button type="button" className="btn-text" onClick={handleReport} disabled={reported}>
+              {reported ? '신고 접수됨' : '🚩 신고'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {actionError && <div className="error-banner post-action-error">{actionError}</div>}
 
       <article className="post-detail">
         <span className="post-category-tag">{post.category}</span>
