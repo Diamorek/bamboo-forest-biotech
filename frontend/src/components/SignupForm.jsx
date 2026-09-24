@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import BambooIcon from './BambooIcon'
+import { setSession } from '../utils/auth'
 import './AuthForm.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -56,7 +57,7 @@ function SignupForm({ onSignupSuccess, onNavigateToLogin }) {
         throw new Error(data.message || '회원가입에 실패했습니다.')
       }
 
-      localStorage.setItem('bfb_token', data.token)
+      setSession(data.user, data.token)
       onSignupSuccess?.(data.user, data.token)
     } catch (err) {
       setError(err.message || '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.')
