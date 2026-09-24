@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getToken, updateCachedUser } from '../utils/auth'
 import './PostForm.css'
 import './SettingsForm.css'
 
@@ -16,7 +17,7 @@ function SettingsForm({ onBack }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
-  const token = localStorage.getItem('bfb_token')
+  const token = getToken()
 
   useEffect(() => {
     const fetchMe = async () => {
@@ -29,6 +30,7 @@ function SettingsForm({ onBack }) {
         const name = data.user?.username ?? data.username ?? ''
         setNickname(name)
         setOriginalNickname(name)
+        if (data.user) updateCachedUser(data.user)
       } catch (err) {
         setError(err.message || '프로필을 불러오지 못했어요.')
       } finally {
@@ -70,6 +72,7 @@ function SettingsForm({ onBack }) {
       const updated = data.user?.username ?? data.username ?? trimmed
       setNickname(updated)
       setOriginalNickname(updated)
+      updateCachedUser({ username: updated })
       setSuccess(true)
     } catch (err) {
       setError(err.message || '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.')
