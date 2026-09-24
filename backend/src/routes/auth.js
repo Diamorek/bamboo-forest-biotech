@@ -30,7 +30,7 @@ router.post('/signup', async (req, res) => {
     const result = await pool.query(
       `INSERT INTO users (email, username, password_hash)
        VALUES ($1, $2, $3)
-       RETURNING id, email, username, created_at`,
+       RETURNING id, email, username, role, created_at`,
       [email, username, passwordHash]
     );
 
@@ -57,7 +57,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT id, email, username, password_hash FROM users WHERE email = $1',
+      'SELECT id, email, username, role, password_hash FROM users WHERE email = $1',
       [email]
     );
     const user = result.rows[0];
@@ -79,7 +79,7 @@ router.post('/login', async (req, res) => {
 
     res.json({
       token,
-      user: { id: user.id, email: user.email, username: user.username },
+      user: { id: user.id, email: user.email, username: user.username, role: user.role },
     });
   } catch (err) {
     console.error('Login error:', err);
