@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getToken } from '../utils/auth'
 import './PostForm.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -10,14 +11,17 @@ const CATEGORY_OPTIONS = [
 ]
 
 /**
- * 게시글 작성 폼
- * @param {(post: object) => void} onPostCreated - 작성 성공 시 호출 (App에서 목록으로 이동 + 갱신)
+ * 게시글 작성/수정 폼 (같은 폼을 두 용도로 씀)
+ * @param {object} [editingPost] - 수정 모드일 때 기존 글 데이터 (id, title, content, category). 없으면 새 글 작성 모드.
+ * @param {(post: object) => void} onSaved - 작성/수정 성공 시 호출 (App에서 이동 + 갱신)
  * @param {() => void} onCancel - 취소/뒤로가기
  */
-function PostForm({ onPostCreated, onCancel }) {
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [category, setCategory] = useState('job')
+function PostForm({ editingPost, onSaved, onCancel }) {
+  const isEditMode = Boolean(editingPost)
+
+  const [title, setTitle] = useState(editingPost?.title ?? '')
+  const [content, setContent] = useState(editingPost?.content ?? '')
+  const [category, setCategory] = useState(editingPost?.category ?? 'job')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -28,7 +32,7 @@ function PostForm({ onPostCreated, onCancel }) {
       return
     }
 
-    const token = localStorage.getItem('bfb_token')
+    const token = getToken()
     if (!token) {
       setError('로그인이 필요해요.')
       return
@@ -37,8 +41,11 @@ function PostForm({ onPostCreated, onCancel }) {
     setError('')
     setLoading(true)
     try {
-      const response = await fetch(`${API_URL}/api/posts`, {
-        method: 'POST',
+      const url = isEditMode ? `${API_URL}/api/posts/${editingPost.id}` : `${API_URL}/api/posts`
+      const method = isEditMode ? 'PATCH' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -49,10 +56,12 @@ function PostForm({ onPostCreated, onCancel }) {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || '글 작성에 실패했습니다.')
+        throw new Error(
+          data.message || data.error || (isEditMode ? '글 수정에 실패했습니다.' : '글 작성에 실패했습니다.')
+        )
       }
 
-      onPostCreated?.(data.post ?? data)
+      onSaved?.(data.post ?? data)
     } catch (err) {
       setError(err.message || '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.')
     } finally {
@@ -66,7 +75,7 @@ function PostForm({ onPostCreated, onCancel }) {
         ← 취소
       </button>
 
-      <h1 className="post-form-title">글쓰기</h1>
+      <h1 className="post-form-title">{isEditMode ? '글 수정' : '글쓰기'}</h1>
 
       <form className="post-form" onSubmit={handleSubmit}>
         {error && <div className="error-banner">{error}</div>}
@@ -111,7 +120,7 @@ function PostForm({ onPostCreated, onCancel }) {
         </div>
 
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? '등록 중...' : '게시하기'}
+          {loading ? '저장 중...' : isEditMode ? '수정하기' : '게시하기'}
         </button>
       </form>
     </div>
