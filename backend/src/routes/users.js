@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, username, email FROM users WHERE id = $1',
+      'SELECT id, username, email, role FROM users WHERE id = $1',
       [req.user.userId]
     );
 
@@ -36,7 +36,7 @@ router.patch('/me', authMiddleware, async (req, res) => {
 
   try {
     const result = await pool.query(
-      'UPDATE users SET username = $1 WHERE id = $2 RETURNING id, username, email',
+      'UPDATE users SET username = $1 WHERE id = $2 RETURNING id, username, email, role',
       [username, req.user.userId]
     );
 
