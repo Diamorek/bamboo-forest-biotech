@@ -1,11 +1,7 @@
 {
   "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist",
-  "rewrites": [
-    {
-      "source": "/google0b764e8287a32c1b.html",
-      "destination": "/index.html"
-    },
+
     {
       "source": "/(.*)",
       "destination": "/index.html"
