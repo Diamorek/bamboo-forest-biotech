@@ -34,6 +34,7 @@
 
 .top-nav-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
@@ -86,11 +87,12 @@
   background: none;
   border: none;
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: 13px;
   font-family: var(--font-body);
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
