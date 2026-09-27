@@ -28,6 +28,18 @@ function TopNav({ active, onNavigate, username, onLogout }) {
             게시판
           </button>
           <button
+            className={`top-nav-tab ${active === 'jobs' ? 'is-active' : ''}`}
+            onClick={() => onNavigate('jobs')}
+          >
+            💼 이직공고
+          </button>
+          <button
+            className={`top-nav-tab ${active === 'lupin' ? 'is-active' : ''}`}
+            onClick={() => onNavigate('lupin')}
+          >
+            🐭 월루
+          </button>
+          <button
             className={`top-nav-tab ${active === 'timer' ? 'is-active' : ''}`}
             onClick={() => onNavigate('timer')}
           >
