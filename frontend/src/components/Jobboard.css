@@ -1,0 +1,107 @@
+.job-board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.job-view-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.job-create-btn {
+  padding: 9px 16px;
+  font-size: 13px;
+}
+
+.job-deadline {
+  color: var(--bamboo-bright);
+  font-weight: 600;
+}
+
+.job-deadline.is-closed {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+/* ---------- 달력 ---------- */
+
+.job-calendar {
+  padding-top: 4px;
+}
+
+.job-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.job-calendar-title {
+  font-size: 15px;
+  font-weight: 600;
+  min-width: 100px;
+  text-align: center;
+}
+
+.job-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.job-calendar-weekdays {
+  margin-bottom: 6px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.job-calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: var(--bg-panel);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.job-calendar-cell.is-empty {
+  background: none;
+  cursor: default;
+}
+
+.job-calendar-cell.has-jobs {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.job-calendar-cell.is-selected {
+  border-color: var(--bamboo-core);
+  background: var(--bamboo-deep);
+}
+
+.job-calendar-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--bamboo-bright);
+}
+
+.job-calendar-selected {
+  margin-top: 24px;
+}
