@@ -9,28 +9,26 @@ import PostDetail from './components/PostDetail'
 import PostForm from './components/PostForm'
 import SettingsForm from './components/SettingsForm'
 import BenchTimerSection from './components/BenchTimerSection'
-import { getToken, getUser, clearSession } from './utils/auth'
+import JobBoard from './components/JobBoard'
+import JobPostForm from './components/JobPostForm'
+import LupinBoard from './components/LupinBoard'
+import { getToken, getUser, clearSession, isAdmin } from './utils/auth'
 
 function App() {
-  // 'login' | 'signup' | 'board' | 'post' | 'write' | 'edit' | 'timer' | 'settings'
+  // 'login' | 'signup' | 'board' | 'post' | 'write' | 'edit' | 'jobs' | 'jobWrite' | 'lupin' | 'timer' | 'settings'
   const [view, setView] = useState('board')
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [editingPost, setEditingPost] = useState(null)
 
-  // localStorage에서 매 렌더마다 새로 읽어와서, 로그인/로그아웃/닉네임 변경 후
-  // 화면으로 돌아오기만 하면(= setView 호출) 자동으로 최신 상태가 반영돼요.
   const currentUser = getUser()
 
-  const handleAuthSuccess = () => {
-    setView('board')
-  }
+  const handleAuthSuccess = () => setView('board')
 
   const handleLogout = () => {
     clearSession()
     setView('board')
   }
 
-  // "글쓰기" 버튼: 로그인 안 돼있으면 로그인 화면으로 먼저 보냄
   const handleWriteClick = () => {
     setEditingPost(null)
     setView(getToken() ? 'write' : 'login')
@@ -39,6 +37,10 @@ function App() {
   const handleEditClick = (post) => {
     setEditingPost(post)
     setView('edit')
+  }
+
+  const handleJobCreateClick = () => {
+    setView(isAdmin() ? 'jobWrite' : 'login')
   }
 
   // 로그인/회원가입은 TopNav 없이 전체 화면으로
@@ -59,12 +61,16 @@ function App() {
     )
   }
 
+  if (view === 'jobWrite') {
+    return <JobPostForm onSaved={() => setView('jobs')} onCancel={() => setView('jobs')} />
+  }
+
   if (view === 'settings') {
     return <SettingsForm onBack={() => setView('board')} />
   }
 
-  // 게시판/게시글/타이머는 같은 TopNav를 공유
-  const activeTab = view === 'timer' ? 'timer' : 'board'
+  // 게시판/게시글/이직공고/월루/타이머는 같은 TopNav를 공유
+  const activeTab = ['timer', 'jobs', 'lupin'].includes(view) ? view : 'board'
 
   return (
     <>
@@ -93,6 +99,10 @@ function App() {
           onWriteClick={handleWriteClick}
         />
       )}
+
+      {view === 'jobs' && <JobBoard onCreateClick={handleJobCreateClick} />}
+
+      {view === 'lupin' && <LupinBoard />}
 
       {view === 'timer' && (
         <div className="board-wrap">
