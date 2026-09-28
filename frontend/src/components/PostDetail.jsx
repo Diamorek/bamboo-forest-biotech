@@ -60,18 +60,36 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
     setLiked((v) => !v)
   }
 
-  const handleCommentSubmit = (e) => {
+  const handleCommentSubmit = async (e) => {
     e.preventDefault()
     if (!commentText.trim()) return
-    // TODO: POST /api/posts/:id/comments 연결
-    setPost((p) => ({
-      ...p,
-      comments: [
-        ...p.comments,
-        { id: Date.now(), author: '나', content: commentText.trim(), createdAt: '방금 전' },
-      ],
-    }))
-    setCommentText('')
+
+    const token = getToken()
+    if (!token) {
+      setActionError('댓글을 쓰려면 로그인이 필요해요.')
+      return
+    }
+
+    setActionError('')
+    try {
+      const response = await fetch(`${API_URL}/api/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: commentText.trim() }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.message || data.error || '댓글 등록에 실패했어요.')
+      }
+      const newComment = data.comment ?? data
+      setPost((p) => ({ ...p, comments: [...p.comments, newComment] }))
+      setCommentText('')
+    } catch (err) {
+      setActionError(err.message || '댓글 등록 중 문제가 생겼어요.')
+    }
   }
 
   const handleDelete = async () => {
@@ -127,7 +145,11 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
 
   if (!post) return null
 
-  const isOwner = currentUser?.username && currentUser.username === post.author
+  // 서버가 authorId를 내려주면 ID로 비교(닉네임 변경에도 안전), 없으면 닉네임 비교로 대체
+  const isOwner =
+    post.authorId != null && currentUser?.id != null
+      ? String(post.authorId) === String(currentUser.id)
+      : Boolean(currentUser?.username) && currentUser.username === post.author
   const canManage = isOwner || admin
 
   return (
