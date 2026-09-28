@@ -30,6 +30,10 @@ app.use('/api/posts', postRoutes);
 // User routes
 app.use('/api/users', userRoutes);
 
+import jobPostingRoutes from './routes/jobPostings.js';
+// ...
+app.use('/api/job-postings', jobPostingRoutes);
+
 // Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
