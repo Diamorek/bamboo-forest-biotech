@@ -226,4 +226,46 @@ router.post('/:id/report', authMiddleware, async (req, res) => {
   }
 });
 
+// 댓글 작성 (로그인 필요)
+router.post('/:id/comments', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const content = (req.body.content || '').trim();
+
+  if (!content) {
+    return res.status(400).json({ message: '댓글 내용을 입력해주세요.' });
+  }
+  if (content.length > 1000) {
+    return res.status(400).json({ message: '댓글은 1000자 이하로 입력해주세요.' });
+  }
+
+  try {
+    const postResult = await pool.query('SELECT id FROM posts WHERE id = $1', [id]);
+    if (postResult.rows.length === 0) {
+      return res.status(404).json({ message: '게시글을 찾을 수 없습니다.' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO comments (post_id, user_id, content)
+       VALUES ($1, $2, $3)
+       RETURNING id, content, created_at`,
+      [id, req.user.userId, content]
+    );
+    const row = result.rows[0];
+
+    const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [req.user.userId]);
+
+    res.status(201).json({
+      comment: {
+        id: row.id,
+        author: userResult.rows[0].username,
+        content: row.content,
+        createdAt: row.created_at,
+      },
+    });
+  } catch (err) {
+    console.error('Create comment error:', err);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
 export default router;
