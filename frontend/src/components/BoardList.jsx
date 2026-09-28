@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { formatRelativeTime } from '../utils/formatDate'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -110,7 +111,7 @@ function BoardList({ onSelectPost, onWriteClick }) {
                   <div className="post-meta">
                     <span>{post.author}</span>
                     <span>·</span>
-                    <span>{post.createdAt}</span>
+                    <span>{formatRelativeTime(post.createdAt)}</span>
                     <span className="post-meta-spacer" />
                     <span>댓글 {post.commentCount}</span>
                     <span>좋아요 {post.likeCount}</span>
