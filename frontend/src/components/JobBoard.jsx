@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { isAdmin } from '../utils/auth'
-import { JOB_CATEGORIES, categoryLabel, MOCK_JOBS } from './jobBoardData'
+import { JOB_CATEGORIES, REGIONS, categoryLabel, regionLabel, MOCK_JOBS } from './jobBoardData'
 import './JobBoard.css'
 import './Board.css'
 
@@ -32,6 +32,7 @@ function JobBoard({ onCreateClick }) {
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState('list') // 'list' | 'calendar'
   const [activeCategory, setActiveCategory] = useState('all')
+  const [activeRegion, setActiveRegion] = useState('all')
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const d = new Date()
     d.setDate(1)
@@ -59,9 +60,15 @@ function JobBoard({ onCreateClick }) {
   }, [])
 
   const filteredJobs = useMemo(() => {
-    const list = activeCategory === 'all' ? jobs : jobs.filter((j) => j.category === activeCategory)
+    let list = jobs
+    if (activeCategory !== 'all') {
+      list = list.filter((j) => (j.categories ?? []).includes(activeCategory))
+    }
+    if (activeRegion !== 'all') {
+      list = list.filter((j) => j.region === activeRegion)
+    }
     return [...list].sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
-  }, [jobs, activeCategory])
+  }, [jobs, activeCategory, activeRegion])
 
   const jobsByDay = useMemo(() => {
     const map = {}
@@ -77,7 +84,7 @@ function JobBoard({ onCreateClick }) {
     const year = calendarMonth.getFullYear()
     const month = calendarMonth.getMonth()
     const firstDay = new Date(year, month, 1)
-    const startOffset = firstDay.getDay() // 0(일)~6(토)
+    const startOffset = firstDay.getDay()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
 
     const cells = []
@@ -98,10 +105,18 @@ function JobBoard({ onCreateClick }) {
   const renderJobRow = (job) => (
     <li key={job.id}>
       <a href={job.url} target="_blank" rel="noopener noreferrer" className="post-row">
-        <span className="post-category-tag">{categoryLabel(job.category)}</span>
+        <div className="job-tag-row">
+          {(job.categories ?? []).map((c) => (
+            <span key={c} className="post-category-tag">
+              {categoryLabel(c)}
+            </span>
+          ))}
+        </div>
         <div className="post-row-main">
           <h2 className="post-title">{job.title}</h2>
-          <p className="post-preview">{job.company}</p>
+          <p className="post-preview">
+            {job.company} · {regionLabel(job.region)}
+          </p>
           <div className="post-meta">
             <span className={`job-deadline ${daysLeftLabel(job.deadline) === '마감' ? 'is-closed' : ''}`}>
               {daysLeftLabel(job.deadline)}
@@ -145,7 +160,7 @@ function JobBoard({ onCreateClick }) {
           className={`category-chip ${activeCategory === 'all' ? 'is-active' : ''}`}
           onClick={() => setActiveCategory('all')}
         >
-          전체
+          직무 전체
         </button>
         {JOB_CATEGORIES.map((c) => (
           <button
@@ -154,6 +169,24 @@ function JobBoard({ onCreateClick }) {
             onClick={() => setActiveCategory(c.id)}
           >
             {c.label}
+          </button>
+        ))}
+      </nav>
+
+      <nav className="category-row job-region-row">
+        <button
+          className={`category-chip ${activeRegion === 'all' ? 'is-active' : ''}`}
+          onClick={() => setActiveRegion('all')}
+        >
+          지역 전체
+        </button>
+        {REGIONS.map((r) => (
+          <button
+            key={r.id}
+            className={`category-chip ${activeRegion === r.id ? 'is-active' : ''}`}
+            onClick={() => setActiveRegion(r.id)}
+          >
+            {r.label}
           </button>
         ))}
       </nav>
