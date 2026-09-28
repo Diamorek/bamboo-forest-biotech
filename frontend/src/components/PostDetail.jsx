@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getToken, getUser, isAdmin } from '../utils/auth'
+import { formatRelativeTime } from '../utils/formatDate'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -186,7 +187,7 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
         <div className="post-meta">
           <span>{post.author}</span>
           <span>·</span>
-          <span>{post.createdAt}</span>
+          <span>{formatRelativeTime(post.createdAt)}</span>
         </div>
 
         <p className="post-detail-content">{post.content}</p>
@@ -207,7 +208,7 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
               <div className="post-meta">
                 <span>{c.author}</span>
                 <span>·</span>
-                <span>{c.createdAt}</span>
+                <span>{formatRelativeTime(c.createdAt)}</span>
               </div>
               <p className="comment-content">{c.content}</p>
             </li>
