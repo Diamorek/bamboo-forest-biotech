@@ -25,7 +25,7 @@ function TopNav({ active, onNavigate, username, onLogout }) {
             className={`top-nav-tab ${active === 'board' ? 'is-active' : ''}`}
             onClick={() => onNavigate('board')}
           >
-            게시판
+            🎋 대나무숲
           </button>
           <button
             className={`top-nav-tab ${active === 'jobs' ? 'is-active' : ''}`}
