@@ -72,6 +72,20 @@ router.get('/', async (req, res) => {
       params
     );
 
+// SELECT에 p.user_id 추가
+`SELECT p.id, p.user_id, p.category, p.title, p.content, p.created_at, p.like_count, u.username
+ FROM posts p
+ JOIN users u ON u.id = p.user_id
+ WHERE p.id = $1`
+
+// 응답에 authorId 추가
+res.json({
+  id: post.id,
+  authorId: post.user_id,   // ← 추가
+  category: post.category,
+  // ...나머지 그대로
+});
+    
     const posts = result.rows.map((row) => ({
       id: row.id,
       category: row.category,
