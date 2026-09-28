@@ -16,6 +16,21 @@
   padding: 4px;
 }
 
+.job-tag-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.job-tag-row .post-category-tag {
+  margin-bottom: 0;
+}
+
+.job-region-row {
+  margin-top: 8px;
+}
+
 .job-create-btn {
   padding: 9px 16px;
   font-size: 13px;
