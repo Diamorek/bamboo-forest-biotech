@@ -14,7 +14,11 @@ const LUPIN_SECTIONS = [
     label: '🎮 초성·단어 맞히기',
     items: [
       { name: '꼬맨틀', url: 'https://semantle-ko.newsjel.ly/', desc: '단어 유사도로 정답 추리, 텍스트만 나열돼서 안전' },
+      { name: '꼬들', url: 'https://kordle.kr/', desc: '한국어 워들, 6번 안에 단어 맞히기' },
+      { name: '꼬오오오오들', url: 'https://koooo.kordle.kr/', desc: '꼬들의 확장판, 더 긴 단어로 도전' },
       { name: 'Wordle', url: 'https://www.nytimes.com/games/wordle/index.html', desc: '5글자 영단어 6번 안에 맞히기' },
+      { name: 'Nerdle', url: 'https://nerdlegame.com/', desc: '숫자·수식 버전 워들, 계산식 6번 안에 맞히기' },
+      { name: '포켓들', url: 'https://pockedle.vercel.app/', desc: '포켓몬 이름 맞히기 버전 워들' },
     ],
   },
   {
