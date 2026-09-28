@@ -37,13 +37,13 @@ function TopNav({ active, onNavigate, username, onLogout }) {
             className={`top-nav-tab ${active === 'lupin' ? 'is-active' : ''}`}
             onClick={() => onNavigate('lupin')}
           >
-            🐭 월루
+            🐭 월루연구소
           </button>
           <button
             className={`top-nav-tab ${active === 'timer' ? 'is-active' : ''}`}
             onClick={() => onNavigate('timer')}
           >
-            🧪 타이머
+            🧪 Benchtick
           </button>
         </nav>
 
