@@ -56,9 +56,36 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
     fetchPost()
   }, [postId])
 
-  const handleLike = () => {
-    // TODO: POST /api/posts/:id/like 연결. 지금은 화면상 토글만 처리.
-    setLiked((v) => !v)
+  const handleLike = async () => {
+    const token = getToken()
+    if (!token) {
+      setActionError('좋아요를 누르려면 로그인이 필요해요.')
+      return
+    }
+
+    setActionError('')
+    try {
+      const response = await fetch(`${API_URL}/api/posts/${postId}/like`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      let data = {}
+      try {
+        data = await response.json()
+      } catch {
+        throw new Error('좋아요 기능이 아직 서버에 연결되지 않았어요.')
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || '좋아요 처리에 실패했어요.')
+      }
+
+      setLiked(data.liked)
+      setPost((p) => ({ ...p, likeCount: data.likeCount }))
+    } catch (err) {
+      setActionError(err.message || '좋아요 처리 중 문제가 생겼어요.')
+    }
   }
 
   const handleCommentSubmit = async (e) => {
@@ -81,7 +108,16 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
         },
         body: JSON.stringify({ content: commentText.trim() }),
       })
-      const data = await response.json()
+
+      // 백엔드에 이 엔드포인트가 아직 없으면 JSON이 아니라 HTML(404 페이지 등)이 돌아올 수 있어서,
+      // 파싱을 try로 감싸고 실패 시 상태 코드 기반의 이해 가능한 메시지로 대체.
+      let data = {}
+      try {
+        data = await response.json()
+      } catch {
+        throw new Error('댓글 기능이 아직 서버에 연결되지 않았어요. 잠시 후 다시 시도해주세요.')
+      }
+
       if (!response.ok) {
         throw new Error(data.message || data.error || '댓글 등록에 실패했어요.')
       }
@@ -193,7 +229,7 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
         <p className="post-detail-content">{post.content}</p>
 
         <button className={`like-btn ${liked ? 'is-liked' : ''}`} onClick={handleLike}>
-          🌱 좋아요 {post.likeCount + (liked ? 1 : 0)}
+          🌱 좋아요 {post.likeCount}
         </button>
       </article>
 
