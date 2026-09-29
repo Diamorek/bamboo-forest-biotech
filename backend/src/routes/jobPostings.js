@@ -7,32 +7,6 @@ const router = express.Router();
 const VALID_CATEGORIES = ['qa', 'qc', 'ra', 'production', 'rnd', 'clinical', 'etc'];
 const VALID_REGIONS = ['seoul', 'gyeonggi', 'incheon', 'daejeon', 'chungbuk', 'busan', 'etc'];
 
-// ---------------------------------------------------------------
-// 테이블 마이그레이션 (category 단수 → categories 배열, region 추가)
-// 기존 테이블에 이미 데이터가 있다면 이 순서로 실행해주세요:
-//
-//   ALTER TABLE job_postings ADD COLUMN categories TEXT[];
-//   UPDATE job_postings SET categories = ARRAY[category];
-//   ALTER TABLE job_postings ALTER COLUMN categories SET NOT NULL;
-//   ALTER TABLE job_postings DROP COLUMN category;
-//   ALTER TABLE job_postings ADD COLUMN region TEXT NOT NULL DEFAULT 'etc';
-//
-// 새로 테이블을 만드는 경우:
-//
-//   CREATE TABLE job_postings (
-//     id SERIAL PRIMARY KEY,
-//     title TEXT NOT NULL,
-//     company TEXT NOT NULL,
-//     categories TEXT[] NOT NULL,
-//     region TEXT NOT NULL,
-//     deadline DATE NOT NULL,
-//     url TEXT NOT NULL,
-//     description TEXT,
-//     created_by INTEGER REFERENCES users(id),
-//     created_at TIMESTAMP DEFAULT NOW()
-//   );
-// ---------------------------------------------------------------
-
 // 이직 공고 목록
 router.get('/', async (req, res) => {
   try {
@@ -60,14 +34,11 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: '운영자만 등록할 수 있습니다.' });
     }
 
-    if (!title || !company || !region || !deadline || !url) {
-      return res.status(400).json({ message: '제목, 회사, 지역, 마감일, 링크를 모두 입력해주세요.' });
-    }
-    if (!Array.isArray(categories) || categories.length === 0) {
-      return res.status(400).json({ message: '직무 분류를 하나 이상 선택해주세요.' });
+    if (!title || !company || !Array.isArray(categories) || categories.length === 0 || !region || !deadline || !url) {
+      return res.status(400).json({ message: '제목, 회사, 분류, 지역, 마감일, 링크를 모두 입력해주세요.' });
     }
     if (!categories.every((c) => VALID_CATEGORIES.includes(c))) {
-      return res.status(400).json({ message: '유효하지 않은 분류입니다.' });
+      return res.status(400).json({ message: '유효하지 않은 분류가 포함되어 있습니다.' });
     }
     if (!VALID_REGIONS.includes(region)) {
       return res.status(400).json({ message: '유효하지 않은 지역입니다.' });
@@ -89,7 +60,6 @@ router.post('/', authMiddleware, async (req, res) => {
 
     res.status(201).json({ job: result.rows[0] });
   } catch (err) {
-    // 존재하지 않는 날짜(예: 2026-02-31)
     if (err.code === '22008' || err.code === '22007') {
       return res.status(400).json({ message: '유효하지 않은 마감일입니다.' });
     }
