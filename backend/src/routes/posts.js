@@ -269,4 +269,38 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
   }
 });
 
+// 게시글 좋아요 토글 (로그인 필요) — 이미 눌렀으면 취소, 안 눌렀으면 추가
+router.post('/:id/like', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const postResult = await pool.query('SELECT id FROM posts WHERE id = $1', [id]);
+    if (postResult.rows.length === 0) {
+      return res.status(404).json({ message: '게시글을 찾을 수 없습니다.' });
+    }
+
+    const existing = await pool.query(
+      'SELECT id FROM likes WHERE post_id = $1 AND user_id = $2',
+      [id, req.user.userId]
+    );
+
+    let liked;
+    if (existing.rows.length > 0) {
+      await pool.query('DELETE FROM likes WHERE post_id = $1 AND user_id = $2', [id, req.user.userId]);
+      await pool.query('UPDATE posts SET like_count = like_count - 1 WHERE id = $1', [id]);
+      liked = false;
+    } else {
+      await pool.query('INSERT INTO likes (post_id, user_id) VALUES ($1, $2)', [id, req.user.userId]);
+      await pool.query('UPDATE posts SET like_count = like_count + 1 WHERE id = $1', [id]);
+      liked = true;
+    }
+
+    const countResult = await pool.query('SELECT like_count FROM posts WHERE id = $1', [id]);
+    res.json({ liked, likeCount: countResult.rows[0].like_count });
+  } catch (err) {
+    console.error('Like post error:', err);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
 export default router;
