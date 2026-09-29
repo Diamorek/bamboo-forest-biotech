@@ -13,11 +13,26 @@ function formatMonthTitle(date) {
 }
 
 function toDateKey(date) {
-  return date.toISOString().slice(0, 10)
+  // toISOString()은 UTC로 변환해서 한국시간 기준으로는 하루 밀릴 수 있어서,
+  // 로컬 연/월/일을 직접 조합해 문자열을 만듭니다.
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+// "YYYY-MM-DD" 문자열을 new Date(dateString)로 바로 파싱하면 UTC 자정으로 해석돼서
+// 마찬가지로 하루가 밀릴 수 있어요. 연/월/일을 직접 분리해서 로컬 자정으로 만듭니다.
+function parseYMD(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d)
 }
 
 function daysLeftLabel(deadline) {
-  const diff = Math.ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24))
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const target = parseYMD(deadline)
+  const diff = Math.round((target - today) / (1000 * 60 * 60 * 24))
   if (diff < 0) return '마감'
   if (diff === 0) return '오늘 마감'
   return `D-${diff}`
