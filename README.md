@@ -1,4 +1,4 @@
-# 🎋 Bamboo Forest Biotech
+# 🎋 바이오대나무숲 (Bio Bamboo Forest)
 
 바이오/제약 분야 익명 커뮤니티 플랫폼
 
@@ -9,8 +9,8 @@
 
 - **대상**: 바이오/제약 분야 종사자
 - **컨셉**: 대나무숲 + 블라인드 스타일 익명 게시판
-- **논의 주제**: 구직/이직 정보, 실험 방법, 회사 생활
-- **상태**: 🚀 초기 개발 중
+- **논의 주제**: 구직/이직 정보, 실험 방법, 회사 생활, 이직공고
+- **상태**: 🚀 베타 운영 중 (핵심 기능 반영 완료)
 
 ---
 
@@ -20,30 +20,39 @@
 |------|-----|------|
 | **프론트엔드** | https://bamboo-forest-biotech.vercel.app | ✅ 배포됨 |
 | **백엔드 API** | https://bamboo-forest-biotech.onrender.com | ✅ 배포됨 |
+| **DB** | Neon (PostgreSQL) | ✅ 이전 완료 |
+
+문의사항 · 신고 · 이직공고 문의: **biobambooforest@gmail.com**
 
 ---
 
 ## 🎯 주요 기능
 
 ### ✅ 완료
-- [x] 기본 프론트엔드 구조 (React + Vite)
-- [x] 기본 백엔드 구조 (Express)
-- [x] Vercel 배포
-- [x] Render 배포
-- [x] API 연결
-
-### 🔄 진행 중
-- [ ] **인증 시스템** (회원가입/로그인)
-  - [ ] JWT 토큰 기반 인증
-  - [ ] 회원가입 엔드포인트 (`POST /api/auth/signup`)
-  - [ ] 로그인 엔드포인트 (`POST /api/auth/login`)
-  - [ ] 프론트엔드 로그인/회원가입 폼
+- [x] 회원가입 / 로그인 (JWT 인증)
+- [x] 닉네임 변경 (설정 화면)
+- [x] 게시판: 글쓰기 / 목록 / 상세 / 수정 / 삭제
+  - [x] 카테고리: 구직/이직, 실험 방법, 회사 생활
+  - [x] 댓글
+  - [x] 좋아요 (토글)
+  - [x] 신고
+  - [x] 본인 글 수정·삭제, 운영자(admin) 권한으로 타인 글 삭제
+- [x] 이직공고 게시판 (관리자 전용 등록)
+  - [x] 직무 분류 다중 선택 (QA / QC / RA·인허가 / 생산 / 연구개발 / 임상 / 기타)
+  - [x] 지역 선택 (서울 / 경기 / 인천 / 대전 / 충북 / 부산·경남 / 기타)
+  - [x] 리스트 뷰 (D-day 표시) / 달력 뷰
+- [x] 월루 게시판 (직장인용 딴짓 사이트 링크 모음)
+- [x] 실험실 타이머 (BenchTick 임베드)
+- [x] 페이지 하단 문의/신고 안내 (Footer)
+- [x] Vercel + Render 배포, Neon DB 이전
+- [x] Google Search Console 소유권 인증
 
 ### 📅 예정
-- [ ] 게시판 기능 (게시글, 댓글)
-- [ ] 좋아요 시스템
 - [ ] 핫 글 순위 (최근/이달/올해 베스트)
-- [ ] 카테고리 필터링
+- [ ] 좋아요 여부 페이지 로드 시 즉시 반영 (현재는 새로고침 시 버튼 상태 초기화, 카운트는 정상 반영)
+- [ ] 신고 게시글 모아보는 운영자 페이지
+- [ ] 검색 기능
+- [ ] 알림 시스템
 - [ ] 모바일 앱 (React Native)
 
 ---
@@ -53,8 +62,8 @@
 | 구분 | 기술 | 배포 |
 |------|------|------|
 | **프론트엔드** | React 18 + Vite 5 | Vercel |
-| **백엔드** | Node.js + Express 4 | Render |
-| **데이터베이스** | PostgreSQL | (예정) |
+| **백엔드** | Node.js + Express 4 (ESM) | Render |
+| **데이터베이스** | PostgreSQL (Neon) | Neon |
 | **인증** | JWT (jsonwebtoken) | - |
 | **보안** | bcryptjs (비밀번호 암호화) | - |
 
@@ -64,33 +73,41 @@
 
 ```
 bamboo-forest-biotech/
-├── backend/                    # Node.js + Express API
+├── backend/
 │   ├── src/
-│   │   ├── index.js           # 메인 서버 파일
+│   │   ├── index.js
 │   │   ├── routes/
-│   │   │   ├── auth.js        # 인증 라우터 (회원가입/로그인)
-│   │   │   └── health.js      # 헬스 체크
-│   │   ├── db.js              # 데이터베이스 연결
+│   │   │   ├── auth.js
+│   │   │   ├── posts.js          # 게시글/댓글/좋아요/신고
+│   │   │   ├── jobPostings.js    # 이직공고
+│   │   │   └── health.js
+│   │   ├── db.js
 │   │   └── middleware/
-│   │       └── auth.js        # JWT 검증 미들웨어
+│   │       └── auth.js
 │   ├── .env.example
 │   └── package.json
-├── frontend/                   # React + Vite
+├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── LoginForm.jsx  # 로그인 폼
-│   │   │   └── SignupForm.jsx # 회원가입 폼
-│   │   ├── pages/
-│   │   ├── hooks/
+│   │   │   ├── LoginForm.jsx / SignupForm.jsx / AuthForm.css
+│   │   │   ├── BoardList.jsx / PostDetail.jsx / PostForm.jsx / Board.css
+│   │   │   ├── JobBoard.jsx / JobPostForm.jsx / jobBoardData.js / JobBoard.css
+│   │   │   ├── LupinBoard.jsx / LupinBoard.css
+│   │   │   ├── BenchTimerSection.jsx / BenchTimerSection.css
+│   │   │   ├── SettingsForm.jsx / SettingsForm.css
+│   │   │   ├── TopNav.jsx / TopNav.css
+│   │   │   ├── Footer.jsx / Footer.css
+│   │   │   └── BambooIcon.jsx
+│   │   ├── styles/
+│   │   │   └── theme.css         # 디자인 토큰 (색상/폰트/공용 스타일)
+│   │   ├── utils/
+│   │   │   ├── auth.js           # 로그인 세션 저장/조회
+│   │   │   └── formatDate.js     # 상대 시간 포맷("n시간 전")
 │   │   └── App.jsx
-│   ├── .env.example
-│   ├── .env.production        # 프로덕션 환경 변수
+│   ├── .env.production
 │   └── package.json
-├── vercel.json                # Vercel 배포 설정
-├── README.md
-└── docs/
-    ├── API.md                 # API 문서
-    └── DATABASE.md            # DB 스키마
+├── vercel.json
+└── README.md
 ```
 
 ---
@@ -102,9 +119,7 @@ bamboo-forest-biotech/
 cd backend
 npm install
 cp .env.example .env
-
 # .env 파일 수정 (DATABASE_URL, JWT_SECRET 등)
-
 npm run dev
 # http://localhost:3001 에서 실행
 ```
@@ -117,20 +132,15 @@ npm run dev
 # http://localhost:5173 에서 실행
 ```
 
-### 환경 변수 설정
+### 환경 변수
 
 **backend/.env**
 ```
-DATABASE_URL=postgresql://user:password@localhost:5432/bamboo_forest
+DATABASE_URL=<Neon PostgreSQL 연결 문자열>
 PORT=3001
 NODE_ENV=development
 JWT_SECRET=your_secret_key_here
 FRONTEND_URL=http://localhost:5173
-```
-
-**frontend/.env.development**
-```
-VITE_API_URL=http://localhost:3001
 ```
 
 **frontend/.env.production**
@@ -140,77 +150,26 @@ VITE_API_URL=https://bamboo-forest-biotech.onrender.com
 
 ---
 
-## 📚 API 문서
+## 📚 API 개요
 
-### 헬스 체크
-```
-GET /api/health
-```
+인증, 게시글, 이직공고 관련 엔드포인트는 `backend/src/routes/` 안 각 파일에 정리되어 있어요. 주요 응답은 에러 시 `{ "message": "..." }` 형태로 통일되어 있습니다.
 
-### 인증 (진행 중)
-```
-POST /api/auth/signup
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "username": "username"
-}
-→ Response: { token: "jwt_token", user: {...} }
-
-POST /api/auth/login
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-→ Response: { token: "jwt_token", user: {...} }
-```
-
-자세한 API 문서는 [docs/API.md](./docs/API.md) 참고
+| 영역 | 엔드포인트 |
+|------|-----------|
+| 인증 | `POST /api/auth/signup`, `POST /api/auth/login` |
+| 내 정보 | `GET /api/users/me`, `PATCH /api/users/me` (닉네임 변경) |
+| 게시글 | `GET/POST /api/posts`, `GET/PATCH/DELETE /api/posts/:id` |
+| 댓글 | `POST /api/posts/:id/comments` |
+| 좋아요 | `POST /api/posts/:id/like` (토글) |
+| 신고 | `POST /api/posts/:id/report` |
+| 이직공고 | `GET/POST /api/job-postings` (등록은 관리자만) |
 
 ---
 
-## 📊 로드맵
+## 👥 팀
 
-### Phase 1: 인증 시스템 (진행 중)
-- [x] 백엔드 기본 구조
-- [ ] 회원가입 API
-- [ ] 로그인 API
-- [ ] JWT 토큰 관리
-- [ ] 프론트엔드 인증 UI
-- [ ] 토큰 저장 (localStorage)
-- [ ] 인증 상태 관리
-
-### Phase 2: 게시판 기능 (예정)
-- [ ] 게시글 CRUD
-- [ ] 댓글 CRUD
-- [ ] 좋아요 기능
-- [ ] 카테고리 필터링
-
-### Phase 3: 핫 알고리즘 (예정)
-- [ ] 인기 글 순위
-- [ ] 조회수 추적
-- [ ] 좋아요 기반 순위
-
-### Phase 4: 고급 기능 (예정)
-- [ ] 검색 기능
-- [ ] 알림 시스템
-- [ ] 모바일 앱
-- [ ] 유료 기능
-
----
-
-## 🔧 현재 진행 사항
-
-### ✅ 2026-09-10 완료
-- [x] React + Vite 프론트엔드 구성
-- [x] Express 백엔드 구성
-- [x] Vercel 배포 (프론트엔드)
-- [x] Render 배포 (백엔드)
-- [x] 프론트엔드 ↔ 백엔드 API 연결
-- [x] 배포 환경 변수 설정
-
-### 🔄 현재 진행 중
-- [ ] JWT 기반 인증 시스템 구현
+- 프론트엔드: 다이어모어
+- 백엔드: 별도 담당자 (Render → Neon 전환, TablePlus로 DB 관리)
 
 ---
 
@@ -218,10 +177,6 @@ POST /api/auth/login
 
 MIT
 
-## 👥 기여
-
-현재 개인 프로젝트입니다. 기여는 향후 열릴 예정입니다.
-
 ---
 
-**상태**: 🚀 개발 중 | **마지막 업데이트**: 2026-09-10
+**상태**: 🚀 베타 운영 중 | **마지막 업데이트**: 2026-09-30
