@@ -8,6 +8,7 @@ const CATEGORY_OPTIONS = [
   { id: 'job', label: '구직/이직' },
   { id: 'experiment', label: '실험 방법' },
   { id: 'worklife', label: '회사 생활' },
+  { id: 'free', label: '자유게시판' },
 ]
 
 /**
