@@ -5,10 +5,10 @@ import './PostForm.css'
 const API_URL = import.meta.env.VITE_API_URL
 
 const CATEGORY_OPTIONS = [
+  { id: 'free', label: '자유게시판' },
   { id: 'job', label: '구직/이직' },
   { id: 'experiment', label: '실험 방법' },
   { id: 'worklife', label: '회사 생활' },
-  { id: 'free', label: '자유게시판' },
 ]
 
 /**
@@ -22,7 +22,7 @@ function PostForm({ editingPost, onSaved, onCancel }) {
 
   const [title, setTitle] = useState(editingPost?.title ?? '')
   const [content, setContent] = useState(editingPost?.content ?? '')
-  const [category, setCategory] = useState(editingPost?.category ?? 'job')
+  const [category, setCategory] = useState(editingPost?.category ?? 'free')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
