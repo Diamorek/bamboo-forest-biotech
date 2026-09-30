@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import BambooIcon from './BambooIcon'
+import BambooIcon from './BambooIcon.jsx'
 import { setSession } from '../utils/auth'
 import './AuthForm.css'
 
