@@ -4,15 +4,16 @@ import authMiddleware from '../middleware/auth.js';
 
 const router = express.Router();
 
+const VALID_CATEGORIES = ['job', 'experiment', 'worklife', 'free'];
+
 // 게시글 작성 (로그인 필요)
 router.post('/', authMiddleware, async (req, res) => {
   const { title, content, category } = req.body;
-  const validCategories = ['job', 'experiment', 'worklife', 'free'];
 
   if (!title || !content || !category) {
     return res.status(400).json({ message: '제목, 본문, 카테고리를 모두 입력해주세요.' });
   }
-  if (!validCategories.includes(category)) {
+  if (!VALID_CATEGORIES.includes(category)) {
     return res.status(400).json({ message: '유효하지 않은 카테고리입니다.' });
   }
 
@@ -48,9 +49,8 @@ router.post('/', authMiddleware, async (req, res) => {
 // 게시글 목록 (카테고리 필터 선택)
 router.get('/', async (req, res) => {
   const { category } = req.query;
-  const validCategories = ['job', 'experiment', 'worklife', 'free'];
 
-  if (category && !validCategories.includes(category)) {
+  if (category && !VALID_CATEGORIES.includes(category)) {
     return res.status(400).json({ message: '유효하지 않은 카테고리입니다.' });
   }
 
@@ -144,9 +144,8 @@ router.get('/:id', async (req, res) => {
 router.patch('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { title, content, category } = req.body;
-  const validCategories = ['job', 'experiment', 'worklife', 'free'];
 
-  if (category && !validCategories.includes(category)) {
+  if (category && !VALID_CATEGORIES.includes(category)) {
     return res.status(400).json({ message: '유효하지 않은 카테고리입니다.' });
   }
 
@@ -265,6 +264,40 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('Create comment error:', err);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 게시글 좋아요 토글 (로그인 필요) — 이미 눌렀으면 취소, 안 눌렀으면 추가
+router.post('/:id/like', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const postResult = await pool.query('SELECT id FROM posts WHERE id = $1', [id]);
+    if (postResult.rows.length === 0) {
+      return res.status(404).json({ message: '게시글을 찾을 수 없습니다.' });
+    }
+
+    const existing = await pool.query(
+      'SELECT id FROM likes WHERE post_id = $1 AND user_id = $2',
+      [id, req.user.userId]
+    );
+
+    let liked;
+    if (existing.rows.length > 0) {
+      await pool.query('DELETE FROM likes WHERE post_id = $1 AND user_id = $2', [id, req.user.userId]);
+      await pool.query('UPDATE posts SET like_count = like_count - 1 WHERE id = $1', [id]);
+      liked = false;
+    } else {
+      await pool.query('INSERT INTO likes (post_id, user_id) VALUES ($1, $2)', [id, req.user.userId]);
+      await pool.query('UPDATE posts SET like_count = like_count + 1 WHERE id = $1', [id]);
+      liked = true;
+    }
+
+    const countResult = await pool.query('SELECT like_count FROM posts WHERE id = $1', [id]);
+    res.json({ liked, likeCount: countResult.rows[0].like_count });
+  } catch (err) {
+    console.error('Like post error:', err);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
