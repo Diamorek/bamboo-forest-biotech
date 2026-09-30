@@ -55,6 +55,8 @@ const MOCK_POSTS = [
 function BoardList({ onSelectPost, onWriteClick }) {
   const [posts, setPosts] = useState([])
   const [activeCategory, setActiveCategory] = useState('all')
+  const [sortMode, setSortMode] = useState('latest') // 'latest' | 'hot'
+  const [hotPeriod, setHotPeriod] = useState('week') // 'week' | 'month' | 'year'
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -78,6 +80,22 @@ function BoardList({ onSelectPost, onWriteClick }) {
   const filteredPosts =
     activeCategory === 'all' ? posts : posts.filter((p) => p.category === activeCategory)
 
+  const PERIOD_DAYS = { week: 7, month: 30, year: 365 }
+
+  // "핫 글": 기간(최근 n일) 안의 글만, (좋아요+댓글수) 합산 점수로 정렬.
+  // 서버 안 건드리고 이미 받아온 목록에서 계산해요.
+  const displayedPosts =
+    sortMode === 'hot'
+      ? [...filteredPosts]
+          .filter((p) => {
+            const created = new Date(p.createdAt)
+            if (Number.isNaN(created.getTime())) return true // 목업 등 날짜 파싱 안 되면 일단 포함
+            const cutoff = Date.now() - PERIOD_DAYS[hotPeriod] * 24 * 60 * 60 * 1000
+            return created.getTime() >= cutoff
+          })
+          .sort((a, b) => (b.likeCount + b.commentCount) - (a.likeCount + a.commentCount))
+      : filteredPosts
+
   const categoryLabel = (id) => CATEGORIES.find((c) => c.id === id)?.label ?? id
 
   return (
@@ -94,20 +112,60 @@ function BoardList({ onSelectPost, onWriteClick }) {
         ))}
       </nav>
 
+      <div className="sort-row">
+        <div className="sort-toggle">
+          <button
+            className={`top-nav-tab ${sortMode === 'latest' ? 'is-active' : ''}`}
+            onClick={() => setSortMode('latest')}
+          >
+            최신순
+          </button>
+          <button
+            className={`top-nav-tab ${sortMode === 'hot' ? 'is-active' : ''}`}
+            onClick={() => setSortMode('hot')}
+          >
+            🔥 핫 글
+          </button>
+        </div>
+
+        {sortMode === 'hot' && (
+          <div className="sort-toggle">
+            {[
+              { id: 'week', label: '이번주' },
+              { id: 'month', label: '이달' },
+              { id: 'year', label: '올해' },
+            ].map((p) => (
+              <button
+                key={p.id}
+                className={`top-nav-tab ${hotPeriod === p.id ? 'is-active' : ''}`}
+                onClick={() => setHotPeriod(p.id)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="bamboo-divider" />
 
       {loading ? (
         <div className="board-empty">불러오는 중...</div>
-      ) : filteredPosts.length === 0 ? (
-        <div className="board-empty">아직 이 분류엔 글이 없어요. 첫 글을 남겨보세요.</div>
+      ) : displayedPosts.length === 0 ? (
+        <div className="board-empty">
+          {sortMode === 'hot' ? '이 기간엔 핫 글이 없어요.' : '아직 이 분류엔 글이 없어요. 첫 글을 남겨보세요.'}
+        </div>
       ) : (
         <ul className="post-list">
-          {filteredPosts.map((post, i) => (
+          {displayedPosts.map((post, i) => (
             <li key={post.id}>
               <button className="post-row" onClick={() => onSelectPost(post.id)}>
                 <span className="post-category-tag">{categoryLabel(post.category)}</span>
                 <div className="post-row-main">
-                  <h2 className="post-title">{post.title}</h2>
+                  <h2 className="post-title">
+                    {sortMode === 'hot' && <span className="hot-rank">{i + 1}</span>}
+                    {post.title}
+                  </h2>
                   <p className="post-preview">{post.preview}</p>
                   <div className="post-meta">
                     <span>{post.author}</span>
@@ -119,7 +177,7 @@ function BoardList({ onSelectPost, onWriteClick }) {
                   </div>
                 </div>
               </button>
-              {i < filteredPosts.length - 1 && <div className="bamboo-divider" />}
+              {i < displayedPosts.length - 1 && <div className="bamboo-divider" />}
             </li>
           ))}
         </ul>
