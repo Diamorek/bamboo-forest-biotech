@@ -38,6 +38,31 @@
   color: var(--bamboo-bright);
 }
 
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.sort-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.hot-rank {
+  display: inline-block;
+  min-width: 18px;
+  margin-right: 6px;
+  color: var(--bamboo-bright);
+  font-weight: 700;
+}
+
 .board-empty {
   padding: 48px 0;
   text-align: center;
