@@ -3,6 +3,7 @@ import { useState } from 'react'
 import './styles/theme.css'
 import TopNav from './components/TopNav'
 import Footer from './components/Footer'
+import BossKey from './components/BossKey'
 import LoginForm from './components/LoginForm'
 import SignupForm from './components/SignupForm'
 import BoardList from './components/BoardList'
@@ -113,6 +114,7 @@ function App() {
     <>
       {content}
       <Footer />
+      <BossKey />
     </>
   )
 }
