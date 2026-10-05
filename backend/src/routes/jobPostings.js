@@ -7,14 +7,22 @@ const router = express.Router();
 const VALID_CATEGORIES = ['qa', 'qc', 'ra', 'production', 'rnd', 'clinical', 'etc'];
 const VALID_REGIONS = ['seoul', 'gyeonggi', 'incheon', 'daejeon', 'chungbuk', 'busan', 'etc'];
 
-// 이직 공고 목록
+// 이직 공고 목록 (마감 지난 공고는 숨기고, 가끔 백그라운드로 실제 삭제도 함께 수행)
 router.get('/', async (req, res) => {
   try {
+    if (Math.random() < 0.05) {
+      pool.query(`
+        DELETE FROM job_postings
+        WHERE deadline < (timezone('Asia/Seoul', now())::date)
+      `).catch(err => console.error('BG Delete Error:', err));
+    }
+
     const result = await pool.query(
       `SELECT id, title, company, categories, region,
               to_char(deadline, 'YYYY-MM-DD') AS deadline,
               url, description
        FROM job_postings
+       WHERE deadline >= (timezone('Asia/Seoul', now())::date)
        ORDER BY deadline ASC, id DESC`
     );
     res.json({ jobs: result.rows });
