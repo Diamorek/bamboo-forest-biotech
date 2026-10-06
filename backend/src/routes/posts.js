@@ -4,7 +4,7 @@ import authMiddleware from '../middleware/auth.js';
 
 const router = express.Router();
 
-const VALID_CATEGORIES = ['job', 'experiment', 'worklife', 'free'];
+const VALID_CATEGORIES = ['job', 'experiment', 'worklife', 'free', 'news'];
 
 // 게시글 작성 (로그인 필요)
 router.post('/', authMiddleware, async (req, res) => {
