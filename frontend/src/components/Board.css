@@ -206,6 +206,25 @@
   padding-top: 4px;
 }
 
+.locked-panel {
+  margin: 24px 0;
+  padding: 28px 20px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.locked-panel p {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.locked-panel .btn-primary {
+  padding: 10px 24px;
+}
+
 .post-detail-title {
   font-size: 22px;
   font-weight: 700;
