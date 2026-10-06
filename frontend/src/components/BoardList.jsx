@@ -6,10 +6,11 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const CATEGORIES = [
   { id: 'all', label: '전체' },
-  { id: 'free', label: '자유게시판' },
   { id: 'job', label: '구직/이직' },
   { id: 'experiment', label: '실험 방법' },
   { id: 'worklife', label: '회사 생활' },
+  { id: 'free', label: '자유게시판' },
+  { id: 'news', label: '바이오 소식' },
 ]
 
 // 백엔드에 /api/posts 가 아직 없는 동안 화면을 미리 볼 수 있도록 남겨둔 예시 데이터.
