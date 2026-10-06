@@ -28,8 +28,9 @@ const MOCK_POST = {
  * @param {() => void} onBack - 목록으로 돌아가기
  * @param {(post: object) => void} onEditClick - 수정 버튼 클릭 시 호출 (현재 글 데이터와 함께)
  * @param {(postId: number|string) => void} onDeleted - 삭제 성공 시 호출 (App에서 목록으로 이동)
+ * @param {() => void} onRequireLogin - 비로그인 상태에서 "로그인하기" 버튼 클릭 시 호출
  */
-function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
+function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) {
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [liked, setLiked] = useState(false)
@@ -189,6 +190,7 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
       ? String(post.authorId) === String(currentUser.id)
       : Boolean(currentUser?.username) && currentUser.username === post.author
   const canManage = isOwner || admin
+  const isLoggedIn = Boolean(getToken())
 
   return (
     <div className="board-wrap">
@@ -227,45 +229,60 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
           <span>{formatRelativeTime(post.createdAt)}</span>
         </div>
 
-        <p className="post-detail-content">{linkify(post.content)}</p>
+        {isLoggedIn ? (
+          <>
+            <p className="post-detail-content">{linkify(post.content)}</p>
 
-        <button className={`like-btn ${liked ? 'is-liked' : ''}`} onClick={handleLike}>
-          🌱 좋아요 {post.likeCount}
-        </button>
+            <button className={`like-btn ${liked ? 'is-liked' : ''}`} onClick={handleLike}>
+              🌱 좋아요 {post.likeCount}
+            </button>
+          </>
+        ) : (
+          <div className="locked-panel">
+            <p>본문은 로그인 후에 볼 수 있어요.</p>
+            <button type="button" className="btn-primary" onClick={() => onRequireLogin?.()}>
+              로그인하기
+            </button>
+          </div>
+        )}
       </article>
 
-      <div className="bamboo-divider section-divider" />
+      {isLoggedIn && (
+        <>
+          <div className="bamboo-divider section-divider" />
 
-      <section className="comments">
-        <h2 className="comments-title">댓글 {post.comments.length}</h2>
+          <section className="comments">
+            <h2 className="comments-title">댓글 {post.comments.length}</h2>
 
-        <ul className="comment-list">
-          {post.comments.map((c) => (
-            <li key={c.id} className="comment-item">
-              <div className="post-meta">
-                <span>{c.author}</span>
-                <span>·</span>
-                <span>{formatRelativeTime(c.createdAt)}</span>
+            <ul className="comment-list">
+              {post.comments.map((c) => (
+                <li key={c.id} className="comment-item">
+                  <div className="post-meta">
+                    <span>{c.author}</span>
+                    <span>·</span>
+                    <span>{formatRelativeTime(c.createdAt)}</span>
+                  </div>
+                  <p className="comment-content">{linkify(c.content)}</p>
+                </li>
+              ))}
+            </ul>
+
+            <form className="comment-form" onSubmit={handleCommentSubmit}>
+              <div className="field">
+                <textarea
+                  rows={3}
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="따뜻한 댓글을 남겨주세요"
+                />
               </div>
-              <p className="comment-content">{linkify(c.content)}</p>
-            </li>
-          ))}
-        </ul>
-
-        <form className="comment-form" onSubmit={handleCommentSubmit}>
-          <div className="field">
-            <textarea
-              rows={3}
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="따뜻한 댓글을 남겨주세요"
-            />
-          </div>
-          <button type="submit" className="btn-primary">
-            댓글 남기기
-          </button>
-        </form>
-      </section>
+              <button type="submit" className="btn-primary">
+                댓글 남기기
+              </button>
+            </form>
+          </section>
+        </>
+      )}
     </div>
   )
 }
