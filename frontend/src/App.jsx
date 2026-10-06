@@ -84,6 +84,7 @@ function App() {
             onBack={() => setView('board')}
             onEditClick={handleEditClick}
             onDeleted={() => setView('board')}
+            onRequireLogin={() => setView('login')}
           />
         )}
 
