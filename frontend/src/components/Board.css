@@ -220,6 +220,13 @@
   white-space: pre-wrap;
 }
 
+.post-detail-content a,
+.comment-content a {
+  color: var(--bamboo-bright);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
 .like-btn {
   background: var(--bg-panel-raised);
   border: 1px solid var(--border);
