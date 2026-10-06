@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getToken, getUser, isAdmin } from '../utils/auth'
 import { formatRelativeTime } from '../utils/formatDate'
+import { linkify } from '../utils/linkify'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -226,7 +227,7 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
           <span>{formatRelativeTime(post.createdAt)}</span>
         </div>
 
-        <p className="post-detail-content">{post.content}</p>
+        <p className="post-detail-content">{linkify(post.content)}</p>
 
         <button className={`like-btn ${liked ? 'is-liked' : ''}`} onClick={handleLike}>
           🌱 좋아요 {post.likeCount}
@@ -246,7 +247,7 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted }) {
                 <span>·</span>
                 <span>{formatRelativeTime(c.createdAt)}</span>
               </div>
-              <p className="comment-content">{c.content}</p>
+              <p className="comment-content">{linkify(c.content)}</p>
             </li>
           ))}
         </ul>
