@@ -36,6 +36,9 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
   const [liked, setLiked] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [actionError, setActionError] = useState('')
+  const [commentError, setCommentError] = useState('')
+  const [editingCommentId, setEditingCommentId] = useState(null)
+  const [editText, setEditText] = useState('')
   const [reported, setReported] = useState(false)
 
   const currentUser = getUser()
@@ -90,44 +93,110 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
     }
   }
 
+  // 댓글 API 공통 요청: JSON이 아닌 응답이 와도 알아볼 수 있는 메시지로 바꿔줘요
+  const requestComment = async (url, method, body, failMessage) => {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+
+    let data = {}
+    try {
+      data = await response.json()
+    } catch {
+      throw new Error('서버 응답을 받지 못했어요. 잠시 후 다시 시도해주세요.')
+    }
+    if (!response.ok) {
+      throw new Error(data.message || data.error || failMessage)
+    }
+    return data
+  }
+
   const handleCommentSubmit = async (e) => {
     e.preventDefault()
     if (!commentText.trim()) return
 
-    const token = getToken()
-    if (!token) {
-      setActionError('댓글을 쓰려면 로그인이 필요해요.')
+    if (!getToken()) {
+      setCommentError('댓글을 쓰려면 로그인이 필요해요.')
       return
     }
 
-    setActionError('')
+    setCommentError('')
     try {
-      const response = await fetch(`${API_URL}/api/posts/${postId}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ content: commentText.trim() }),
-      })
-
-      // 백엔드에 이 엔드포인트가 아직 없으면 JSON이 아니라 HTML(404 페이지 등)이 돌아올 수 있어서,
-      // 파싱을 try로 감싸고 실패 시 상태 코드 기반의 이해 가능한 메시지로 대체.
-      let data = {}
-      try {
-        data = await response.json()
-      } catch {
-        throw new Error('댓글 기능이 아직 서버에 연결되지 않았어요. 잠시 후 다시 시도해주세요.')
-      }
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || '댓글 등록에 실패했어요.')
-      }
+      const data = await requestComment(
+        `${API_URL}/api/posts/${postId}/comments`,
+        'POST',
+        { content: commentText.trim() },
+        '댓글 등록에 실패했어요.'
+      )
       const newComment = data.comment ?? data
       setPost((p) => ({ ...p, comments: [...p.comments, newComment] }))
       setCommentText('')
     } catch (err) {
-      setActionError(err.message || '댓글 등록 중 문제가 생겼어요.')
+      setCommentError(err.message || '댓글 등록 중 문제가 생겼어요.')
+    }
+  }
+
+  const startEditComment = (c) => {
+    setCommentError('')
+    setEditingCommentId(c.id)
+    setEditText(c.content)
+  }
+
+  const cancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditText('')
+  }
+
+  const handleCommentUpdate = async (commentId) => {
+    if (!editText.trim()) {
+      setCommentError('댓글 내용을 입력해주세요.')
+      return
+    }
+
+    setCommentError('')
+    try {
+      const data = await requestComment(
+        `${API_URL}/api/posts/${postId}/comments/${commentId}`,
+        'PATCH',
+        { content: editText.trim() },
+        '댓글 수정에 실패했어요.'
+      )
+      const updated = data.comment ?? data
+      setPost((p) => ({
+        ...p,
+        comments: p.comments.map((c) => (c.id === commentId ? { ...c, ...updated } : c)),
+      }))
+      cancelEditComment()
+    } catch (err) {
+      setCommentError(err.message || '댓글 수정 중 문제가 생겼어요.')
+    }
+  }
+
+  const handleCommentDelete = async (commentId) => {
+    if (!window.confirm('이 댓글을 삭제할까요? "삭제된 댓글입니다."로 표시돼요.')) return
+
+    setCommentError('')
+    try {
+      await requestComment(
+        `${API_URL}/api/posts/${postId}/comments/${commentId}`,
+        'DELETE',
+        null,
+        '댓글 삭제에 실패했어요.'
+      )
+      setPost((p) => ({
+        ...p,
+        comments: p.comments.map((c) =>
+          c.id === commentId ? { ...c, deleted: true, content: '', author: null, authorId: null } : c
+        ),
+      }))
+      if (editingCommentId === commentId) cancelEditComment()
+    } catch (err) {
+      setCommentError(err.message || '댓글 삭제 중 문제가 생겼어요.')
     }
   }
 
@@ -192,6 +261,11 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
   const canManage = isOwner || admin
   const isLoggedIn = Boolean(getToken())
 
+  const isCommentOwner = (c) =>
+    c.authorId != null && currentUser?.id != null
+      ? String(c.authorId) === String(currentUser.id)
+      : Boolean(currentUser?.username) && c.author === currentUser.username
+
   return (
     <div className="board-wrap">
       <div className="post-detail-top">
@@ -252,20 +326,71 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
           <div className="bamboo-divider section-divider" />
 
           <section className="comments">
-            <h2 className="comments-title">댓글 {post.comments.length}</h2>
+            <h2 className="comments-title">댓글 {post.comments.filter((c) => !c.deleted).length}</h2>
 
             <ul className="comment-list">
-              {post.comments.map((c) => (
-                <li key={c.id} className="comment-item">
-                  <div className="post-meta">
-                    <span>{c.author}</span>
-                    <span>·</span>
-                    <span>{formatRelativeTime(c.createdAt)}</span>
-                  </div>
-                  <p className="comment-content">{linkify(c.content)}</p>
-                </li>
-              ))}
+              {post.comments.map((c) => {
+                // 삭제된 댓글: 내용/작성자 없이 흔적만 남겨요
+                if (c.deleted) {
+                  return (
+                    <li key={c.id} className="comment-item">
+                      <p className="comment-deleted">삭제된 댓글입니다.</p>
+                    </li>
+                  )
+                }
+
+                const mine = isCommentOwner(c)
+                const isEditing = editingCommentId === c.id
+
+                return (
+                  <li key={c.id} className="comment-item">
+                    <div className="post-meta">
+                      <span>{c.author}</span>
+                      <span>·</span>
+                      <span>{formatRelativeTime(c.createdAt)}</span>
+                      {c.edited && <span className="comment-edited">(수정됨)</span>}
+
+                      {(mine || admin) && !isEditing && (
+                        <span className="comment-actions">
+                          {mine && (
+                            <button type="button" className="btn-text comment-action-btn" onClick={() => startEditComment(c)}>
+                              수정
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="btn-text comment-action-btn post-delete-btn"
+                            onClick={() => handleCommentDelete(c.id)}
+                          >
+                            삭제{admin && !mine ? ' (운영자)' : ''}
+                          </button>
+                        </span>
+                      )}
+                    </div>
+
+                    {isEditing ? (
+                      <div className="comment-edit-form">
+                        <div className="field">
+                          <textarea rows={3} value={editText} onChange={(e) => setEditText(e.target.value)} />
+                        </div>
+                        <div className="comment-edit-buttons">
+                          <button type="button" className="btn-primary" onClick={() => handleCommentUpdate(c.id)}>
+                            저장
+                          </button>
+                          <button type="button" className="btn-text" onClick={cancelEditComment}>
+                            취소
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="comment-content">{linkify(c.content)}</p>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
+
+            {commentError && <div className="error-banner comment-error">{commentError}</div>}
 
             <form className="comment-form" onSubmit={handleCommentSubmit}>
               <div className="field">
