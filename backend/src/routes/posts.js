@@ -64,7 +64,7 @@ router.get('/', async (req, res) => {
 
     const result = await pool.query(
       `SELECT p.id, p.category, p.title, p.content, p.created_at, p.like_count, u.username,
-              (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
+              (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
        FROM posts p
        JOIN users u ON u.id = p.user_id
        ${where}
@@ -110,7 +110,7 @@ router.get('/:id', async (req, res) => {
     const post = postResult.rows[0];
 
     const commentsResult = await pool.query(
-      `SELECT c.id, c.content, c.created_at, u.username
+      `SELECT c.id, c.user_id, c.content, c.created_at, c.edited_at, c.deleted_at, u.username
        FROM comments c
        JOIN users u ON u.id = c.user_id
        WHERE c.post_id = $1
@@ -127,11 +127,15 @@ router.get('/:id', async (req, res) => {
       author: post.username,
       createdAt: post.created_at,
       likeCount: post.like_count,
+      // 삭제된 댓글은 내용/작성자를 아예 내려주지 않고 "삭제됨" 표시만 남겨요
       comments: commentsResult.rows.map((c) => ({
         id: c.id,
-        author: c.username,
-        content: c.content,
+        authorId: c.deleted_at ? null : c.user_id,
+        author: c.deleted_at ? null : c.username,
+        content: c.deleted_at ? '' : c.content,
         createdAt: c.created_at,
+        edited: Boolean(c.edited_at),
+        deleted: Boolean(c.deleted_at),
       })),
     });
   } catch (err) {
@@ -257,9 +261,12 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
     res.status(201).json({
       comment: {
         id: row.id,
+        authorId: req.user.userId,
         author: userResult.rows[0].username,
         content: row.content,
         createdAt: row.created_at,
+        edited: false,
+        deleted: false,
       },
     });
   } catch (err) {
@@ -298,6 +305,92 @@ router.post('/:id/like', authMiddleware, async (req, res) => {
     res.json({ liked, likeCount: countResult.rows[0].like_count });
   } catch (err) {
     console.error('Like post error:', err);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 댓글 수정 (작성자 본인만) — 수정되면 화면에 "(수정됨)"이 붙어요
+router.patch('/:id/comments/:commentId', authMiddleware, async (req, res) => {
+  const { id, commentId } = req.params;
+  const content = (req.body.content || '').trim();
+
+  if (!content) {
+    return res.status(400).json({ message: '댓글 내용을 입력해주세요.' });
+  }
+  if (content.length > 1000) {
+    return res.status(400).json({ message: '댓글은 1000자 이하로 입력해주세요.' });
+  }
+
+  try {
+    const found = await pool.query(
+      'SELECT user_id, deleted_at FROM comments WHERE id = $1 AND post_id = $2',
+      [commentId, id]
+    );
+    if (found.rows.length === 0) {
+      return res.status(404).json({ message: '댓글을 찾을 수 없습니다.' });
+    }
+    if (found.rows[0].deleted_at) {
+      return res.status(400).json({ message: '삭제된 댓글은 수정할 수 없습니다.' });
+    }
+    if (found.rows[0].user_id !== req.user.userId) {
+      return res.status(403).json({ message: '수정 권한이 없습니다.' });
+    }
+
+    const result = await pool.query(
+      `UPDATE comments SET content = $1, edited_at = NOW()
+       WHERE id = $2
+       RETURNING id, content, created_at`,
+      [content, commentId]
+    );
+    const row = result.rows[0];
+
+    const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [req.user.userId]);
+
+    res.json({
+      comment: {
+        id: row.id,
+        authorId: req.user.userId,
+        author: userResult.rows[0].username,
+        content: row.content,
+        createdAt: row.created_at,
+        edited: true,
+        deleted: false,
+      },
+    });
+  } catch (err) {
+    console.error('Update comment error:', err);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 댓글 삭제 (작성자 본인 또는 admin) — 실제로 지우지 않고 "삭제된 댓글입니다."로 흔적을 남겨요
+router.delete('/:id/comments/:commentId', authMiddleware, async (req, res) => {
+  const { id, commentId } = req.params;
+
+  try {
+    const found = await pool.query(
+      'SELECT user_id, deleted_at FROM comments WHERE id = $1 AND post_id = $2',
+      [commentId, id]
+    );
+    if (found.rows.length === 0) {
+      return res.status(404).json({ message: '댓글을 찾을 수 없습니다.' });
+    }
+    if (found.rows[0].deleted_at) {
+      return res.json({ message: '이미 삭제된 댓글입니다.' });
+    }
+
+    const userResult = await pool.query('SELECT role FROM users WHERE id = $1', [req.user.userId]);
+    const role = userResult.rows[0]?.role;
+    const isOwner = found.rows[0].user_id === req.user.userId;
+
+    if (!isOwner && role !== 'admin') {
+      return res.status(403).json({ message: '삭제 권한이 없습니다.' });
+    }
+
+    await pool.query('UPDATE comments SET deleted_at = NOW() WHERE id = $1', [commentId]);
+    res.json({ message: '삭제되었습니다.' });
+  } catch (err) {
+    console.error('Delete comment error:', err);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
