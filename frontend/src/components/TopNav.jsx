@@ -1,4 +1,5 @@
 import BambooIcon from './BambooIcon'
+import { IS_IN_APP } from '../utils/env'
 import './TopNav.css'
 
 /**
@@ -25,7 +26,7 @@ function TopNav({ active, onNavigate, username, onLogout }) {
             className={`top-nav-tab ${active === 'board' ? 'is-active' : ''}`}
             onClick={() => onNavigate('board')}
           >
-            🎋 대나무숲
+            게시판
           </button>
           <button
             className={`top-nav-tab ${active === 'jobs' ? 'is-active' : ''}`}
@@ -37,14 +38,17 @@ function TopNav({ active, onNavigate, username, onLogout }) {
             className={`top-nav-tab ${active === 'lupin' ? 'is-active' : ''}`}
             onClick={() => onNavigate('lupin')}
           >
-            🐭 월루연구소
+            🐭 월루
           </button>
-          <button
-            className={`top-nav-tab ${active === 'timer' ? 'is-active' : ''}`}
-            onClick={() => onNavigate('timer')}
-          >
-            🧪 Benchtick
-          </button>
+          {/* BenchTick 어플 안에서는 타이머 안에 타이머가 또 뜨니까 숨겨요 */}
+          {!IS_IN_APP && (
+            <button
+              className={`top-nav-tab ${active === 'timer' ? 'is-active' : ''}`}
+              onClick={() => onNavigate('timer')}
+            >
+              🧪 타이머
+            </button>
+          )}
         </nav>
 
         {username ? (
