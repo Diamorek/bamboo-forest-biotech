@@ -296,6 +296,49 @@
   overflow-wrap: anywhere;
 }
 
+.comment-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+}
+
+.comment-action-btn {
+  font-size: 12px;
+}
+
+.comment-edited {
+  color: var(--text-faint);
+}
+
+.comment-deleted {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.comment-edit-form {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comment-edit-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.comment-edit-buttons .btn-primary {
+  padding: 8px 18px;
+  font-size: 13px;
+}
+
+.comment-error {
+  margin-bottom: 12px;
+}
+
 .comment-form {
   display: flex;
   flex-direction: column;
