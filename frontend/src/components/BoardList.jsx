@@ -6,12 +6,15 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const CATEGORIES = [
   { id: 'all', label: '전체' },
- { id: 'free', label: '자유게시판' },
+  { id: 'free', label: '자유게시판' },
   { id: 'job', label: '구직/이직' },
   { id: 'experiment', label: '실험 방법' },
   { id: 'worklife', label: '회사 생활' },
   { id: 'news', label: '바이오 소식' },
 ]
+
+const MIN_QUERY_LENGTH = 2 // 한 글자 검색은 결과가 너무 많고 서버 부담만 커서 2글자부터
+const SEARCH_LIMIT = 50
 
 // 백엔드에 /api/posts 가 아직 없는 동안 화면을 미리 볼 수 있도록 남겨둔 예시 데이터.
 // 실제 엔드포인트가 생기면 이 배열은 지우고 아래 fetchPosts()의 catch 분기도 제거하세요.
@@ -59,6 +62,10 @@ function BoardList({ onSelectPost, onWriteClick }) {
   const [sortMode, setSortMode] = useState('latest') // 'latest' | 'hot'
   const [hotPeriod, setHotPeriod] = useState('week') // 'week' | 'month' | 'year'
   const [loading, setLoading] = useState(true)
+  const [searchInput, setSearchInput] = useState('')
+  const [searchQuery, setSearchQuery] = useState('') // 타이핑이 멈춘 뒤 확정된 검색어
+  const [searchResults, setSearchResults] = useState(null) // null이면 검색 중이 아님
+  const [searching, setSearching] = useState(false)
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -78,8 +85,56 @@ function BoardList({ onSelectPost, onWriteClick }) {
     fetchPosts()
   }, [])
 
+  // 글자를 칠 때마다 서버를 부르지 않도록, 타이핑이 0.3초 멈추면 그때 검색어를 확정해요
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchQuery(searchInput.trim()), 300)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+  useEffect(() => {
+    if (searchQuery.length < MIN_QUERY_LENGTH) {
+      setSearchResults(null)
+      setSearching(false)
+      return
+    }
+
+    // 새 검색이 시작되면 이전 요청을 취소해서, 늦게 도착한 옛 결과가 화면을 덮어쓰지 않게 해요
+    const controller = new AbortController()
+    setSearching(true)
+
+    const runSearch = async () => {
+      try {
+        const params = new URLSearchParams({ q: searchQuery, limit: String(SEARCH_LIMIT) })
+        if (activeCategory !== 'all') params.set('category', activeCategory)
+
+        const response = await fetch(`${API_URL}/api/posts?${params}`, { signal: controller.signal })
+        if (!response.ok) throw new Error('search failed')
+        const data = await response.json()
+        // 검색이 아직 반영 안 된 서버는 q를 무시하고 전체 목록을 주기 때문에(searched 표시 없음),
+        // 그걸 검색 결과로 착각하지 않도록 아래 fallback으로 넘겨요.
+        if (data.searched !== true) throw new Error('search not supported')
+
+        setSearchResults(data.posts ?? [])
+        setSearching(false)
+      } catch (err) {
+        if (err.name === 'AbortError') return
+        // 서버 검색을 못 쓰는 상황이면, 이미 받아온 목록에서 제목/미리보기만이라도 찾아줘요
+        const needle = searchQuery.toLowerCase()
+        setSearchResults(
+          posts.filter((p) => `${p.title} ${p.preview}`.toLowerCase().includes(needle))
+        )
+        setSearching(false)
+      }
+    }
+    runSearch()
+
+    return () => controller.abort()
+  }, [searchQuery, activeCategory, posts])
+
+  // 검색 중이면 검색 결과에서, 아니면 전체 목록에서 시작
+  const basePosts = searchResults ?? posts
   const filteredPosts =
-    activeCategory === 'all' ? posts : posts.filter((p) => p.category === activeCategory)
+    activeCategory === 'all' ? basePosts : basePosts.filter((p) => p.category === activeCategory)
 
   const PERIOD_DAYS = { week: 7, month: 30, year: 365 }
 
@@ -101,6 +156,34 @@ function BoardList({ onSelectPost, onWriteClick }) {
 
   return (
     <div className="board-wrap">
+      <div className="search-row">
+        <input
+          type="search"
+          className="search-input"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="제목·내용 검색 (2글자 이상)"
+          aria-label="게시글 검색"
+        />
+        {searchInput && (
+          <button type="button" className="btn-text" onClick={() => setSearchInput('')}>
+            지우기
+          </button>
+        )}
+      </div>
+
+      {searchQuery.length >= MIN_QUERY_LENGTH && (
+        <p className="search-status">
+          {searching
+            ? '검색 중...'
+            : `'${searchQuery}' 검색 결과 ${displayedPosts.length}건${
+                searchResults && searchResults.length >= SEARCH_LIMIT
+                  ? ` (최대 ${SEARCH_LIMIT}건까지 보여드려요)`
+                  : ''
+              }`}
+        </p>
+      )}
+
       <nav className="category-row">
         {CATEGORIES.map((c) => (
           <button
@@ -154,7 +237,11 @@ function BoardList({ onSelectPost, onWriteClick }) {
         <div className="board-empty">불러오는 중...</div>
       ) : displayedPosts.length === 0 ? (
         <div className="board-empty">
-          {sortMode === 'hot' ? '이 기간엔 핫 글이 없어요.' : '아직 이 분류엔 글이 없어요. 첫 글을 남겨보세요.'}
+          {searchResults !== null
+            ? `'${searchQuery}'에 대한 결과가 없어요.`
+            : sortMode === 'hot'
+              ? '이 기간엔 핫 글이 없어요.'
+              : '아직 이 분류엔 글이 없어요. 첫 글을 남겨보세요.'}
         </div>
       ) : (
         <ul className="post-list">
