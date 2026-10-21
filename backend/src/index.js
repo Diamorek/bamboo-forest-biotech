@@ -21,6 +21,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Bamboo Forest API is running' });
 });
 
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+});
+
 // Auth routes
 app.use('/api/auth', authRoutes);
 
