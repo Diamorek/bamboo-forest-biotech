@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import postRoutes from './routes/posts.js';
 import userRoutes from './routes/users.js';
+import jobPostingRoutes from './routes/jobPostings.js';
 
 dotenv.config();
 
@@ -21,21 +22,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Bamboo Forest API is running' });
 });
 
+// API 서버는 검색에 노출될 필요가 없어서 크롤러 차단
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain').send('User-agent: *\nDisallow: /\n');
 });
 
-// Auth routes
+// Routes
 app.use('/api/auth', authRoutes);
-
-// Post routes
 app.use('/api/posts', postRoutes);
-
-// User routes
 app.use('/api/users', userRoutes);
-
-import jobPostingRoutes from './routes/jobPostings.js';
-// ...
 app.use('/api/job-postings', jobPostingRoutes);
 
 // Error handling
