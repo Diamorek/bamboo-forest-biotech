@@ -4,7 +4,7 @@ import authMiddleware from '../middleware/auth.js';
 
 const router = express.Router();
 
-const VALID_CATEGORIES = ['job', 'experiment', 'worklife', 'free', 'news'];
+const VALID_CATEGORIES = ['free', 'job', 'experiment', 'worklife', 'news'];
 
 // 게시글 작성 (로그인 필요)
 router.post('/', authMiddleware, async (req, res) => {
@@ -46,29 +46,50 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
-// 게시글 목록 (카테고리 필터 선택)
+// 게시글 목록 (카테고리 필터, 검색어 q 선택)
 router.get('/', async (req, res) => {
   const { category } = req.query;
+  const q = String(req.query.q || '').trim().slice(0, 50);
 
   if (category && !VALID_CATEGORIES.includes(category)) {
     return res.status(400).json({ message: '유효하지 않은 카테고리입니다.' });
   }
+  if (q && q.length < 2) {
+    return res.status(400).json({ message: '검색어는 2글자 이상 입력해주세요.' });
+  }
 
   try {
     const params = [];
-    let where = '';
+    const conditions = [];
+
     if (category) {
       params.push(category);
-      where = 'WHERE p.category = $1';
+      conditions.push(`p.category = $${params.length}`);
+    }
+    if (q) {
+      // 검색어에 LIKE 특수문자(% _ \)가 있어도 글자 그대로 찾도록 이스케이프
+      params.push(`%${q.replace(/[\\%_]/g, '\\$&')}%`);
+      conditions.push(`(p.title ILIKE $${params.length} OR p.content ILIKE $${params.length})`);
     }
 
+    // 검색할 때만 결과 개수를 제한 (기본 50건, 최대 100건)
+    let limitClause = '';
+    if (q) {
+      const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
+      params.push(limit);
+      limitClause = `LIMIT $${params.length}`;
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
     const result = await pool.query(
-      `SELECT p.id, p.category, p.title, p.content, p.created_at, p.like_count, u.username,
+      // 본문 전체 대신 앞 81글자만 가져와요 (미리보기 80자 + 더 있는지 확인용) → 목록이 훨씬 가벼워져요
+      `SELECT p.id, p.category, p.title, LEFT(p.content, 81) AS content_head, p.created_at, p.like_count, u.username,
               (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
        FROM posts p
        JOIN users u ON u.id = p.user_id
        ${where}
-       ORDER BY p.created_at DESC`,
+       ORDER BY p.created_at DESC
+       ${limitClause}`,
       params
     );
 
@@ -76,14 +97,15 @@ router.get('/', async (req, res) => {
       id: row.id,
       category: row.category,
       title: row.title,
-      preview: row.content.length > 80 ? row.content.slice(0, 80) + '...' : row.content,
+      preview: row.content_head.length > 80 ? row.content_head.slice(0, 80) + '...' : row.content_head,
       author: row.username,
       createdAt: row.created_at,
       commentCount: Number(row.comment_count),
       likeCount: row.like_count,
     }));
 
-    res.json({ posts });
+    // searched: true → 서버가 검색을 실제로 적용했다는 표시 (프론트가 확인용으로 사용)
+    res.json(q ? { posts, searched: true } : { posts });
   } catch (err) {
     console.error('List posts error:', err);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
