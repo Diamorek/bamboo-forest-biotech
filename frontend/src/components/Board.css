@@ -38,6 +38,41 @@
   color: var(--bamboo-bright);
 }
 
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.search-input:focus {
+  border-color: var(--bamboo-core);
+}
+
+.search-input::placeholder {
+  color: var(--text-faint);
+}
+
+.search-status {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
 .sort-row {
   display: flex;
   align-items: center;
