@@ -35,33 +35,91 @@ const LUPIN_SECTIONS = [
       { name: 'WindowSwap', url: 'https://www.window-swap.com/', desc: '전 세계 창밖 풍경 무작위로 보기' },
     ],
   },
+  {
+    label: '📝 취업 준비',
+    items: [
+      {
+        name: '신역검 연습장',
+        url: 'https://www.yeokgeom.com/',
+        desc: 'AI역량검사(신역검) 게임 9종 무료·무제한 연습 (비공식 연습 도구)',
+      },
+    ],
+  },
+  {
+    // compact: true → 설명 없이 이름만 칩 모양으로 촘촘하게 보여줘요 (20개라 길어지지 않게)
+    label: '🏢 제약·바이오 TOP 20 채용 사이트',
+    note: '2026.10.13 기준으로 정리한 목록이에요. 주소가 바뀌었거나 안 열리면 하단 문의 메일로 알려주세요.',
+    compact: true,
+    items: [
+      { name: '삼성바이오로직스', url: 'https://www.samsungcareers.com' },
+      { name: '셀트리온', url: 'https://celltrion.recruiter.co.kr' },
+      { name: '알테오젠', url: 'https://www.alteogen.com' },
+      { name: 'SK바이오팜', url: 'https://www.skcareers.com' },
+      { name: '에이비엘바이오', url: 'https://www.ablbio.com' },
+      { name: '리가켐바이오', url: 'https://ligachembio.ninehire.site' },
+      { name: '삼성바이오에피스', url: 'https://www.samsungcareers.com' },
+      { name: 'HLB', url: 'https://hlb-group.career.greetinghr.com' },
+      { name: 'SK바이오사이언스', url: 'https://www.skcareers.com' },
+      { name: '유한양행', url: 'https://yuhan.recruiter.co.kr' },
+      { name: '종근당', url: 'https://ckd.recruiter.co.kr' },
+      { name: '한미약품', url: 'https://hanmi.recruiter.co.kr' },
+      { name: '대웅제약', url: 'https://daewoong.recruiter.co.kr' },
+      { name: 'GC녹십자', url: 'https://recruit.gccorp.com' },
+      { name: '보령', url: 'https://recruit.boryung.co.kr' },
+      { name: '동국제약', url: 'https://dkpharm.recruiter.co.kr' },
+      { name: '파마리서치', url: 'https://pharmaresearch_hr.career.greetinghr.com' },
+      { name: '휴젤', url: 'https://hugel.career.greetinghr.com' },
+      { name: 'HK이노엔', url: 'https://kolmar.recruiter.co.kr' },
+      { name: '오스코텍', url: 'http://www.oscotec.com' },
+    ],
+  },
 ]
 
 function LupinBoard() {
   return (
     <div className="board-wrap">
       <p className="lupin-intro">
-        조용히 즐길 수 있는 사이트 모음이에요. 상사 오면 Alt+Tab 잊지 마세요 🙏
+        조용히 즐길 수 있는 사이트와 취업 준비 링크 모음이에요. 상사 오면 Alt+Tab 잊지 마세요 🙏
       </p>
 
       {LUPIN_SECTIONS.map((section, i) => (
         <section key={section.label} className="lupin-section">
           <h2 className="lupin-section-title">{section.label}</h2>
-          <ul className="lupin-list">
-            {section.items.map((item) => (
-              <li key={item.url}>
-                <a
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="lupin-item"
-                >
-                  <span className="lupin-item-name">{item.name} ↗</span>
-                  <span className="lupin-item-desc">{item.desc}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
+          {section.note && <p className="lupin-section-note">{section.note}</p>}
+
+          {section.compact ? (
+            <ul className="lupin-chip-grid">
+              {section.items.map((item) => (
+                // 삼성·SK처럼 한 사이트를 여러 회사가 같이 쓰는 경우가 있어서 key는 이름으로
+                <li key={item.name}>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="lupin-chip"
+                  >
+                    {item.name} ↗
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul className="lupin-list">
+              {section.items.map((item) => (
+                <li key={item.url}>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="lupin-item"
+                  >
+                    <span className="lupin-item-name">{item.name} ↗</span>
+                    <span className="lupin-item-desc">{item.desc}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
           {i < LUPIN_SECTIONS.length - 1 && <div className="bamboo-divider" />}
         </section>
       ))}
