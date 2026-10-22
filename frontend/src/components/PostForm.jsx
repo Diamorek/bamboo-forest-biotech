@@ -12,6 +12,15 @@ const CATEGORY_OPTIONS = [
   { id: 'news', label: '바이오 소식' },
 ]
 
+// 카테고리별로 본문 입력칸에 보여줄 작성 안내
+const CONTENT_PLACEHOLDERS = {
+  free: '업계 이야기가 아니어도 괜찮아요. 편하게 적어주세요.',
+  job: '직무와 연차, 궁금한 점을 적어주세요.\n예) QC 3년차, 바이오시밀러에서 CDMO로 이직 고민 중.\n회사명은 꼭 필요할 때만, 연봉은 범위로만 적어도 충분해요.',
+  experiment: '하려는 실험, 시도한 조건(시료·장비·버퍼·시간 등), 결과나 막힌 부분을 적어주세요.\n사내 기밀이나 미공개 데이터는 빼고 일반화해서 써주세요.',
+  worklife: '상황 중심으로 적어주세요.\n특정 회사나 사람이 드러나는 표현은 줄이고, 나눌 만한 경험이나 팁이 함께 있으면 더 좋아요.',
+  news: '출처(기사·보도자료 링크)와 한두 줄 요약, 내 생각을 함께 적어주세요.\n기사 전문을 그대로 붙여넣는 건 피해주세요.',
+}
+
 /**
  * 게시글 작성/수정 폼 (같은 폼을 두 용도로 씀)
  * @param {object} [editingPost] - 수정 모드일 때 기존 글 데이터 (id, title, content, category). 없으면 새 글 작성 모드.
@@ -79,6 +88,19 @@ function PostForm({ editingPost, onSaved, onCancel }) {
 
       <h1 className="post-form-title">{isEditMode ? '글 수정' : '글쓰기'}</h1>
 
+      <div className="post-guide">
+        <p>
+          대나무숲은 바이오·제약 사람들이 회사에서는 하기 어려운 이야기를 나누는 익명 공간이에요.
+          경험은 솔직하게, 정보는 구체적으로 적어주세요. 같은 고민을 하는 분에게 큰 도움이 돼요.
+        </p>
+        <p>아래 내용은 피해주세요.</p>
+        <ul>
+          <li>회사나 개인이 특정되는 비방</li>
+          <li>사내 기밀, 미공개 데이터 (공정, 임상, 고객사 정보 등)</li>
+          <li>광고·홍보 (채용 공고는 이직공고 게시판 이용, 문의: biobambooforest@gmail.com)</li>
+        </ul>
+      </div>
+
       <form className="post-form" onSubmit={handleSubmit}>
         {error && <div className="error-banner">{error}</div>}
 
@@ -117,7 +139,7 @@ function PostForm({ editingPost, onSaved, onCancel }) {
             rows={10}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="솔직하게, 그리고 서로에게 도움이 되게 적어주세요."
+            placeholder={CONTENT_PLACEHOLDERS[category] ?? '솔직하게, 그리고 서로에게 도움이 되게 적어주세요.'}
           />
         </div>
 
