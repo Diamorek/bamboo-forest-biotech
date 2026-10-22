@@ -41,3 +41,5 @@ router.patch('/:id', authMiddleware, async (req, res) => {
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
+
+export default router;
