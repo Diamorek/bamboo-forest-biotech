@@ -26,3 +26,27 @@
   margin-top: 4px;
   padding: 12px 28px;
 }
+
+/* 글쓰기 안내문 박스 */
+.post-guide {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-left: 2px solid rgba(127, 166, 131, 0.6);
+  background: rgba(127, 166, 131, 0.08);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.post-guide p {
+  margin: 0 0 8px;
+}
+
+.post-guide ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.post-guide li {
+  margin-bottom: 2px;
+  opacity: 0.85;
+}
