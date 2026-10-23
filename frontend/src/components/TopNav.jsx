@@ -1,5 +1,6 @@
 import BambooIcon from './BambooIcon'
 import { IS_IN_APP } from '../utils/env'
+import { useNewPostsCount } from '../utils/newPosts'
 import './TopNav.css'
 
 /**
@@ -10,6 +11,8 @@ import './TopNav.css'
  * @param {() => void} onLogout
  */
 function TopNav({ active, onNavigate, username, onLogout }) {
+  const newCount = useNewPostsCount()
+
   return (
     <header className="top-nav">
       <div className="top-nav-brand">
@@ -26,7 +29,12 @@ function TopNav({ active, onNavigate, username, onLogout }) {
             className={`top-nav-tab ${active === 'board' ? 'is-active' : ''}`}
             onClick={() => onNavigate('board')}
           >
-            📋 게시판
+            게시판
+            {newCount > 0 && (
+              <span className="tab-badge" aria-label={`새 글 ${newCount}개`}>
+                {newCount > 99 ? '99+' : newCount}
+              </span>
+            )}
           </button>
           <button
             className={`top-nav-tab ${active === 'jobs' ? 'is-active' : ''}`}
