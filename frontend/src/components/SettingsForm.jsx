@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getToken, updateCachedUser } from '../utils/auth'
+import MyPointsSection from './MyPointsSection'
 import './PostForm.css'
 import './SettingsForm.css'
 
@@ -94,6 +95,8 @@ function SettingsForm({ onBack }) {
       ) : !token ? (
         <div className="board-empty">로그인이 필요해요.</div>
       ) : (
+        <>
+        <MyPointsSection />
         <form className="post-form" onSubmit={handleSubmit}>
           {error && <div className="error-banner">{error}</div>}
           {success && <div className="success-banner">닉네임이 변경됐어요.</div>}
@@ -114,6 +117,7 @@ function SettingsForm({ onBack }) {
             {saving ? '저장 중...' : '저장'}
           </button>
         </form>
+        </>
       )}
     </div>
   )
