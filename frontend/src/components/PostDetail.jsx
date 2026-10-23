@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { getToken, getUser, isAdmin } from '../utils/auth'
 import { formatRelativeTime } from '../utils/formatDate'
 import { linkify } from '../utils/linkify'
+import { reportPoints } from '../utils/points'
+import LevelBadge from './LevelBadge'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -134,6 +136,7 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
         '댓글 등록에 실패했어요.'
       )
       const newComment = data.comment ?? data
+      reportPoints(data.points) // 레벨업이면 축하 팝업
       setPost((p) => ({ ...p, comments: [...p.comments, newComment] }))
       setCommentText('')
     } catch (err) {
@@ -298,6 +301,7 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
         <span className="post-category-tag">{post.category}</span>
         <h1 className="post-detail-title">{post.title}</h1>
         <div className="post-meta">
+          <LevelBadge level={post.authorLevel} />
           <span>{post.author}</span>
           <span>·</span>
           <span>{formatRelativeTime(post.createdAt)}</span>
@@ -345,6 +349,7 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
                 return (
                   <li key={c.id} className="comment-item">
                     <div className="post-meta">
+                      <LevelBadge level={c.authorLevel} compact />
                       <span>{c.author}</span>
                       <span>·</span>
                       <span>{formatRelativeTime(c.createdAt)}</span>
