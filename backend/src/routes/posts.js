@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../db.js';
 import authMiddleware from '../middleware/auth.js';
+import { awardPointsSafe } from '../points.js';
 
 const router = express.Router();
 
@@ -28,6 +29,15 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [req.user.userId]);
 
+    // 글이 정상 저장된 뒤에만 포인트 지급 (지급이 실패해도 글 작성은 성공 처리)
+    const points = await awardPointsSafe({
+      userId: req.user.userId,
+      eventType: 'post',
+      eventKey: `post:${row.id}`,
+      referenceId: String(row.id),
+      description: '게시글 작성',
+    });
+
     res.status(201).json({
       post: {
         id: row.id,
@@ -35,10 +45,12 @@ router.post('/', authMiddleware, async (req, res) => {
         title: row.title,
         content: row.content,
         author: userResult.rows[0].username,
+        authorLevel: points.level ?? null,
         createdAt: row.created_at,
         likeCount: row.like_count,
         commentCount: 0,
       },
+      points,
     });
   } catch (err) {
     console.error('Create post error:', err);
@@ -84,9 +96,11 @@ router.get('/', async (req, res) => {
     const result = await pool.query(
       // 본문 전체 대신 앞 81글자만 가져와요 (미리보기 80자 + 더 있는지 확인용)
       `SELECT p.id, p.category, p.title, LEFT(p.content, 81) AS content_head, p.created_at, p.like_count, u.username,
+              COALESCE(s.current_level, 1) AS author_level,
               (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count
        FROM posts p
        JOIN users u ON u.id = p.user_id
+       LEFT JOIN user_point_stats s ON s.user_id = p.user_id
        ${where}
        ORDER BY p.created_at DESC
        ${limitClause}`,
@@ -99,6 +113,7 @@ router.get('/', async (req, res) => {
       title: row.title,
       preview: row.content_head.length > 80 ? row.content_head.slice(0, 80) + '...' : row.content_head,
       author: row.username,
+      authorLevel: row.author_level,
       createdAt: row.created_at,
       commentCount: Number(row.comment_count),
       likeCount: row.like_count,
@@ -118,9 +133,11 @@ router.get('/:id', async (req, res) => {
 
   try {
     const postResult = await pool.query(
-      `SELECT p.id, p.user_id, p.category, p.title, p.content, p.created_at, p.like_count, u.username
+      `SELECT p.id, p.user_id, p.category, p.title, p.content, p.created_at, p.like_count, u.username,
+              COALESCE(s.current_level, 1) AS author_level
        FROM posts p
        JOIN users u ON u.id = p.user_id
+       LEFT JOIN user_point_stats s ON s.user_id = p.user_id
        WHERE p.id = $1`,
       [id]
     );
@@ -132,9 +149,11 @@ router.get('/:id', async (req, res) => {
     const post = postResult.rows[0];
 
     const commentsResult = await pool.query(
-      `SELECT c.id, c.user_id, c.content, c.created_at, c.edited_at, c.deleted_at, u.username
+      `SELECT c.id, c.user_id, c.content, c.created_at, c.edited_at, c.deleted_at, u.username,
+              COALESCE(s.current_level, 1) AS author_level
        FROM comments c
        JOIN users u ON u.id = c.user_id
+       LEFT JOIN user_point_stats s ON s.user_id = c.user_id
        WHERE c.post_id = $1
        ORDER BY c.created_at ASC`,
       [id]
@@ -147,6 +166,7 @@ router.get('/:id', async (req, res) => {
       title: post.title,
       content: post.content,
       author: post.username,
+      authorLevel: post.author_level,
       createdAt: post.created_at,
       likeCount: post.like_count,
       // 삭제된 댓글은 내용/작성자를 아예 내려주지 않고 "삭제됨" 표시만 남겨요
@@ -154,6 +174,7 @@ router.get('/:id', async (req, res) => {
         id: c.id,
         authorId: c.deleted_at ? null : c.user_id,
         author: c.deleted_at ? null : c.username,
+        authorLevel: c.deleted_at ? null : c.author_level,
         content: c.deleted_at ? '' : c.content,
         createdAt: c.created_at,
         edited: Boolean(c.edited_at),
@@ -289,16 +310,27 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
 
     const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [req.user.userId]);
 
+    // 댓글이 정상 저장된 뒤에만 포인트 지급 (지급이 실패해도 댓글 작성은 성공 처리)
+    const points = await awardPointsSafe({
+      userId: req.user.userId,
+      eventType: 'comment',
+      eventKey: `comment:${row.id}`,
+      referenceId: String(row.id),
+      description: '댓글 작성',
+    });
+
     res.status(201).json({
       comment: {
         id: row.id,
         authorId: req.user.userId,
         author: userResult.rows[0].username,
+        authorLevel: points.level ?? null,
         content: row.content,
         createdAt: row.created_at,
         edited: false,
         deleted: false,
       },
+      points,
     });
   } catch (err) {
     console.error('Create comment error:', err);
@@ -375,7 +407,8 @@ router.patch('/:id/comments/:commentId', authMiddleware, async (req, res) => {
     const result = await pool.query(
       `UPDATE comments SET content = $1, edited_at = NOW()
        WHERE id = $2
-       RETURNING id, content, created_at`,
+       RETURNING id, content, created_at,
+                 COALESCE((SELECT current_level FROM user_point_stats WHERE user_id = comments.user_id), 1) AS author_level`,
       [content, commentId]
     );
     const row = result.rows[0];
@@ -387,6 +420,7 @@ router.patch('/:id/comments/:commentId', authMiddleware, async (req, res) => {
         id: row.id,
         authorId: req.user.userId,
         author: userResult.rows[0].username,
+        authorLevel: row.author_level,
         content: row.content,
         createdAt: row.created_at,
         edited: true,
