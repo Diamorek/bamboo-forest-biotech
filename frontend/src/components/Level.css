@@ -1,0 +1,247 @@
+/* 포인트·레벨 UI — 사이트 테마(theme.css)의 색상 변수를 그대로 써서 어두운 숲 분위기에 맞췄어요 */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── 레벨 배지 ── */
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 3px 10px 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-panel-raised);
+  color: var(--text);
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.level-badge__icon {
+  font-size: 16px;
+}
+
+.level-badge__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.level-badge__level {
+  color: var(--text-faint);
+  font-size: 10px;
+}
+
+.level-badge__name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.level-badge.compact {
+  gap: 4px;
+  padding: 2px 7px 2px 5px;
+}
+
+.level-badge.compact .level-badge__icon {
+  font-size: 13px;
+}
+
+.level-badge__lv {
+  color: var(--bamboo-bright);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ── 성장 게이지 카드 ── */
+.my-points {
+  margin-bottom: 32px;
+}
+
+.point-card {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-panel);
+  color: var(--text);
+}
+
+.point-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.point-card__eyebrow {
+  margin: 0 0 8px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.point-card h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.point-card__points {
+  margin: 4px 0 0;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.point-card__mascot {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--bg-panel-raised);
+  font-size: 32px;
+}
+
+.point-card__track {
+  height: 10px;
+  overflow: hidden;
+  margin-top: 20px;
+  border-radius: 999px;
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--border);
+}
+
+.point-card__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--bamboo-core), var(--bamboo-bright));
+  transition: width 350ms ease;
+}
+
+.point-card__next {
+  margin: 14px 0 0;
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.point-card__next strong {
+  color: var(--bamboo-bright);
+}
+
+/* ── 활동 내역 ── */
+.point-history-title {
+  margin: 24px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.point-history-empty,
+.point-error {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.point-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.point-history__item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.point-history__item:last-child {
+  border-bottom: none;
+}
+
+.point-history__desc {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+}
+
+.point-history__points {
+  color: var(--bamboo-bright);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.point-history__points.is-minus {
+  color: var(--danger);
+}
+
+.point-history__time {
+  color: var(--text-faint);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* ── 레벨업 팝업 ── */
+.levelup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.levelup-modal {
+  width: 100%;
+  max-width: 320px;
+  padding: 32px 24px 24px;
+  border: 1px solid var(--bamboo-core);
+  border-radius: var(--radius-md);
+  background: var(--bg-panel);
+  color: var(--text);
+  text-align: center;
+}
+
+.levelup-modal__icon {
+  font-size: 52px;
+  line-height: 1;
+}
+
+.levelup-modal h2 {
+  margin: 14px 0 6px;
+  font-size: 20px;
+}
+
+.levelup-modal p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.levelup-modal__rank {
+  margin: 14px 0 6px !important;
+  color: var(--bamboo-bright) !important;
+  font-size: 18px !important;
+  font-weight: 800;
+}
+
+.levelup-modal__hint {
+  margin-bottom: 20px !important;
+  font-size: 13px !important;
+}
+
+.levelup-modal .btn-primary {
+  padding: 10px 28px;
+}
