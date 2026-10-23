@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 import { formatRelativeTime } from '../utils/formatDate'
+import { getLastSeenId, markPostsSeen, useNewPostsCount } from '../utils/newPosts'
+import LevelBadge from './LevelBadge'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
 
 const CATEGORIES = [
   { id: 'all', label: '전체' },
-  { id: 'free', label: '자유게시판' },
   { id: 'job', label: '구직/이직' },
   { id: 'experiment', label: '실험 방법' },
   { id: 'worklife', label: '회사 생활' },
+  { id: 'free', label: '자유게시판' },
   { id: 'news', label: '바이오 소식' },
 ]
 
@@ -62,6 +64,10 @@ function BoardList({ onSelectPost, onWriteClick }) {
   const [sortMode, setSortMode] = useState('latest') // 'latest' | 'hot'
   const [hotPeriod, setHotPeriod] = useState('week') // 'week' | 'month' | 'year'
   const [loading, setLoading] = useState(true)
+  const [reloadKey, setReloadKey] = useState(0) // "새 글 불러오기"를 눌렀을 때 +1
+  const newCount = useNewPostsCount()
+  // 이 화면을 열기 전까지 읽은 마지막 글 번호 → 그보다 큰 번호가 "새 글"
+  const [seenBaseline] = useState(() => getLastSeenId())
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('') // 타이핑이 멈춘 뒤 확정된 검색어
   const [searchResults, setSearchResults] = useState(null) // null이면 검색 중이 아님
@@ -69,12 +75,15 @@ function BoardList({ onSelectPost, onWriteClick }) {
 
   useEffect(() => {
     const fetchPosts = async () => {
-      setLoading(true)
+      if (reloadKey === 0) setLoading(true) // 새로 불러올 때는 화면을 비우지 않고 조용히 교체
       try {
         const response = await fetch(`${API_URL}/api/posts`)
         if (!response.ok) throw new Error('not ready')
         const data = await response.json()
-        setPosts(data.posts ?? data)
+        const list = data.posts ?? data
+        setPosts(list)
+        // 서버에서 실제로 받아온 목록일 때만 "여기까지 읽음" 처리 (임시 목업 데이터는 제외)
+        markPostsSeen(list.reduce((m, p) => (typeof p.id === 'number' && p.id > m ? p.id : m), 0))
       } catch {
         // 백엔드 엔드포인트가 아직 없을 때를 위한 임시 fallback
         setPosts(MOCK_POSTS)
@@ -83,7 +92,7 @@ function BoardList({ onSelectPost, onWriteClick }) {
       }
     }
     fetchPosts()
-  }, [])
+  }, [reloadKey])
 
   // 글자를 칠 때마다 서버를 부르지 않도록, 타이핑이 0.3초 멈추면 그때 검색어를 확정해요
   useEffect(() => {
@@ -156,6 +165,12 @@ function BoardList({ onSelectPost, onWriteClick }) {
 
   return (
     <div className="board-wrap">
+      {!loading && newCount > 0 && (
+        <button type="button" className="new-posts-banner" onClick={() => setReloadKey((k) => k + 1)}>
+          🌱 새 글 {newCount}개가 올라왔어요 · 눌러서 불러오기
+        </button>
+      )}
+
       <div className="search-row">
         <input
           type="search"
@@ -253,9 +268,13 @@ function BoardList({ onSelectPost, onWriteClick }) {
                   <h2 className="post-title">
                     {sortMode === 'hot' && <span className="hot-rank">{i + 1}</span>}
                     {post.title}
+                    {seenBaseline != null && typeof post.id === 'number' && post.id > seenBaseline && (
+                      <span className="new-dot" aria-label="새 글">N</span>
+                    )}
                   </h2>
                   <p className="post-preview">{post.preview}</p>
                   <div className="post-meta">
+                    <LevelBadge level={post.authorLevel} compact />
                     <span>{post.author}</span>
                     <span>·</span>
                     <span>{formatRelativeTime(post.createdAt)}</span>
