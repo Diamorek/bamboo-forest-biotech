@@ -1,6 +1,6 @@
 import BambooIcon from './BambooIcon'
-import { IS_IN_APP } from '../utils/env'
-import { useNewPostsCount } from '../utils/newPosts'
+import { IS_IN_APP } from '../utils/env.js'
+import { useNewPostsCount } from '../utils/newPosts.js'
 import './TopNav.css'
 
 /**
