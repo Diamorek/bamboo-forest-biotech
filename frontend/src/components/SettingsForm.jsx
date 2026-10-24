@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getToken, updateCachedUser } from '../utils/auth'
-import MyPointsSection from './MyPointsSection'
+import { getToken, updateCachedUser } from '../utils/auth.js'
+import MyPointsSection from './MyPointsSection.jsx'
 import './PostForm.css'
 import './SettingsForm.css'
 
