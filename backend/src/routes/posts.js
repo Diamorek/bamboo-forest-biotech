@@ -2,10 +2,31 @@ import express from 'express';
 import pool from '../db.js';
 import authMiddleware from '../middleware/auth.js';
 import { awardPointsSafe } from '../points.js';
+import { notifyOperator, isNotifyEnabled, clip } from '../utils/notify.js';
 
 const router = express.Router();
 
 const VALID_CATEGORIES = ['job', 'experiment', 'worklife', 'free', 'news'];
+
+// 신고 알림: 응답과 별개로 백그라운드에서 처리 (실패해도 신고 접수는 정상)
+function notifyReport(postId) {
+  if (!isNotifyEnabled()) return;
+
+  pool
+    .query(
+      `SELECT p.title,
+              (SELECT COUNT(*) FROM reports r WHERE r.post_id = p.id) AS report_count
+       FROM posts p
+       WHERE p.id = $1`,
+      [postId]
+    )
+    .then((result) => {
+      const row = result.rows[0];
+      if (!row) return;
+      notifyOperator(`🚩 신고 접수 — 게시글 #${postId} "${clip(row.title, 80)}" (누적 ${row.report_count}건)`);
+    })
+    .catch((err) => console.error('Report notify error:', err));
+}
 
 // 게시글 작성 (로그인 필요)
 router.post('/', authMiddleware, async (req, res) => {
@@ -26,6 +47,11 @@ router.post('/', authMiddleware, async (req, res) => {
       [req.user.userId, category, title, content]
     );
     const row = result.rows[0];
+
+    // 운영자 알림 (기다리지 않음: 알림이 느리거나 실패해도 글쓰기는 정상 처리)
+    notifyOperator(
+      `🆕 새 글 #${row.id} [${row.category}] ${clip(row.title, 80)}\n${clip(row.content, 100)}`
+    );
 
     const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [req.user.userId]);
 
@@ -123,6 +149,29 @@ router.get('/', async (req, res) => {
     res.json(q ? { posts, searched: true } : { posts });
   } catch (err) {
     console.error('List posts error:', err);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 새 글 알림용 가벼운 통계 (로그인 불필요, 프론트가 1분마다 호출)
+// 반드시 router.get('/:id') 보다 위에 있어야 해요 (아래에 두면 'stats'가 글 번호로 처리돼요)
+router.get('/stats', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+
+  // sinceId가 없거나 숫자가 아니면 null → newCount는 0
+  const raw = String(req.query.sinceId ?? '');
+  const sinceId = /^\d{1,10}$/.test(raw) && Number(raw) <= 2147483647 ? Number(raw) : null;
+
+  try {
+    const result = await pool.query(
+      `SELECT (SELECT COALESCE(MAX(id), 0) FROM posts) AS latest_id,
+              (SELECT COUNT(*) FROM posts WHERE id > $1::int) AS new_count`,
+      [sinceId]
+    );
+    const row = result.rows[0];
+    res.json({ latestId: Number(row.latest_id), newCount: Number(row.new_count) });
+  } catch (err) {
+    console.error('Post stats error:', err);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
@@ -271,6 +320,9 @@ router.post('/:id/report', authMiddleware, async (req, res) => {
       'INSERT INTO reports (post_id, reporter_id) VALUES ($1, $2)',
       [id, req.user.userId]
     );
+
+    // 운영자 알림 (기다리지 않음)
+    notifyReport(id);
 
     res.status(201).json({ message: '신고가 접수되었습니다.' });
   } catch (err) {
