@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { getToken, getUser, isAdmin } from '../utils/auth'
 import { formatRelativeTime } from '../utils/formatDate'
-import { linkify } from '../utils/linkify'
-import { reportPoints } from '../utils/points'
-import LevelBadge from './LevelBadge'
+import { linkify } from '../utils/linkify.jsx'
+import { reportPoints } from '../utils/points.js'
+import LevelBadge from './LevelBadge.jsx'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
