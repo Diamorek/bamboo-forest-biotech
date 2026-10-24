@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { formatRelativeTime } from '../utils/formatDate'
-import { getLastSeenId, markPostsSeen, useNewPostsCount } from '../utils/newPosts'
-import LevelBadge from './LevelBadge'
+import { getLastSeenId, markPostsSeen, useNewPostsCount } from '../utils/newPosts.js'
+import LevelBadge from './LevelBadge.jsx'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
