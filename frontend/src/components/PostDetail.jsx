@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { getToken, getUser, isAdmin } from '../utils/auth'
 import { formatRelativeTime } from '../utils/formatDate'
-import { linkify } from '../utils/linkify.jsx'
-import { reportPoints } from '../utils/points.js'
-import LevelBadge from './LevelBadge.jsx'
+import { linkify } from '../utils/linkify'
+import { reportPoints } from '../utils/points'
+import LevelBadge from './LevelBadge'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -40,6 +40,8 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
   const [actionError, setActionError] = useState('')
   const [commentError, setCommentError] = useState('')
   const [editingCommentId, setEditingCommentId] = useState(null)
+  const [replyTo, setReplyTo] = useState(null) // { forId: 답글 폼이 열린 댓글, parentId: 서버에 보낼 부모 댓글, mention }
+  const [replyText, setReplyText] = useState('')
   const [editText, setEditText] = useState('')
   const [reported, setReported] = useState(false)
 
@@ -198,8 +200,60 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
         ),
       }))
       if (editingCommentId === commentId) cancelEditComment()
+      if (replyTo?.forId === commentId) {
+        setReplyTo(null)
+        setReplyText('')
+      }
     } catch (err) {
       setCommentError(err.message || '댓글 삭제 중 문제가 생겼어요.')
+    }
+  }
+
+  // ── 대댓글 ──────────────────────────────────────────────
+  const startReply = (c) => {
+    if (!getToken()) {
+      setCommentError('답글을 쓰려면 로그인이 필요해요.')
+      return
+    }
+    setCommentError('')
+    cancelEditComment()
+
+    // 답글에 다시 답글을 달아도 한 단계로 묶어요: 부모는 항상 맨 위 댓글, 대신 @닉네임을 붙여줘요
+    const targetIsReply = c.parentId != null
+    const mention = targetIsReply ? `@${c.author} ` : ''
+    setReplyTo({ forId: c.id, parentId: targetIsReply ? c.parentId : c.id, mention })
+    setReplyText(mention)
+  }
+
+  const cancelReply = () => {
+    setReplyTo(null)
+    setReplyText('')
+  }
+
+  const handleReplySubmit = async (e) => {
+    e.preventDefault()
+    if (!replyTo) return
+
+    const body = replyText.trim()
+    if (!body || body === replyTo.mention.trim()) {
+      setCommentError('답글 내용을 입력해주세요.')
+      return
+    }
+
+    setCommentError('')
+    try {
+      const data = await requestComment(
+        `${API_URL}/api/posts/${postId}/comments`,
+        'POST',
+        { content: body, parentId: replyTo.parentId },
+        '답글 등록에 실패했어요.'
+      )
+      const newComment = data.comment ?? data
+      setPost((p) => ({ ...p, comments: [...p.comments, newComment] }))
+      reportPoints(data.points) // 레벨업이면 축하 팝업
+      cancelReply()
+    } catch (err) {
+      setCommentError(err.message || '답글 등록 중 문제가 생겼어요.')
     }
   }
 
@@ -269,6 +323,113 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
       ? String(c.authorId) === String(currentUser.id)
       : Boolean(currentUser?.username) && c.author === currentUser.username
 
+  // 서버는 댓글을 한 줄로 주고, 각 댓글의 parentId 로 묶어서 보여줘요 (한 단계만)
+  const sameId = (a, b) => a != null && b != null && String(a) === String(b)
+  const allComments = post.comments
+  const topLevelComments = allComments.filter(
+    // 부모가 없거나, 부모를 목록에서 못 찾는 경우(비정상)에도 사라지지 않게 맨 위 단계로 보여줘요
+    (c) => c.parentId == null || !allComments.some((p) => sameId(p.id, c.parentId))
+  )
+  const repliesOf = (id) => allComments.filter((c) => sameId(c.parentId, id))
+
+  const replyForm = (
+    <form className="reply-form" onSubmit={handleReplySubmit}>
+      <div className="field">
+        <textarea
+          rows={2}
+          autoFocus
+          value={replyText}
+          onChange={(e) => setReplyText(e.target.value)}
+          placeholder="답글을 입력하세요"
+        />
+      </div>
+      <div className="comment-edit-buttons">
+        <button type="submit" className="btn-primary">
+          답글 등록
+        </button>
+        <button type="button" className="btn-text" onClick={cancelReply}>
+          취소
+        </button>
+      </div>
+    </form>
+  )
+
+  const renderComment = (c, isReply) => {
+    const replies = isReply ? [] : repliesOf(c.id)
+    const repliesList = replies.length > 0 && (
+      <ul className="reply-list">{replies.map((r) => renderComment(r, true))}</ul>
+    )
+    const itemClass = `comment-item${isReply ? ' is-reply' : ''}`
+
+    // 삭제된 댓글: 내용/작성자 없이 흔적만 남기고, 달려 있던 답글은 그대로 이어서 보여줘요
+    if (c.deleted) {
+      return (
+        <li key={c.id} className={itemClass}>
+          <p className="comment-deleted">삭제된 댓글입니다.</p>
+          {repliesList}
+        </li>
+      )
+    }
+
+    const mine = isCommentOwner(c)
+    const isEditing = editingCommentId === c.id
+
+    return (
+      <li key={c.id} className={itemClass}>
+        <div className="post-meta">
+          <LevelBadge level={c.authorLevel} compact />
+          <span>{c.author}</span>
+          <span>·</span>
+          <span>{formatRelativeTime(c.createdAt)}</span>
+          {c.edited && <span className="comment-edited">(수정됨)</span>}
+
+          {!isEditing && (
+            <span className="comment-actions">
+              <button type="button" className="btn-text comment-action-btn" onClick={() => startReply(c)}>
+                답글
+              </button>
+              {mine && (
+                <button type="button" className="btn-text comment-action-btn" onClick={() => startEditComment(c)}>
+                  수정
+                </button>
+              )}
+              {(mine || admin) && (
+                <button
+                  type="button"
+                  className="btn-text comment-action-btn post-delete-btn"
+                  onClick={() => handleCommentDelete(c.id)}
+                >
+                  삭제{admin && !mine ? ' (운영자)' : ''}
+                </button>
+              )}
+            </span>
+          )}
+        </div>
+
+        {isEditing ? (
+          <div className="comment-edit-form">
+            <div className="field">
+              <textarea rows={3} value={editText} onChange={(e) => setEditText(e.target.value)} />
+            </div>
+            <div className="comment-edit-buttons">
+              <button type="button" className="btn-primary" onClick={() => handleCommentUpdate(c.id)}>
+                저장
+              </button>
+              <button type="button" className="btn-text" onClick={cancelEditComment}>
+                취소
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="comment-content">{linkify(c.content)}</p>
+        )}
+
+        {replyTo?.forId === c.id && replyForm}
+        {repliesList}
+      </li>
+    )
+  }
+
   return (
     <div className="board-wrap">
       <div className="post-detail-top">
@@ -332,68 +493,7 @@ function PostDetail({ postId, onBack, onEditClick, onDeleted, onRequireLogin }) 
           <section className="comments">
             <h2 className="comments-title">댓글 {post.comments.filter((c) => !c.deleted).length}</h2>
 
-            <ul className="comment-list">
-              {post.comments.map((c) => {
-                // 삭제된 댓글: 내용/작성자 없이 흔적만 남겨요
-                if (c.deleted) {
-                  return (
-                    <li key={c.id} className="comment-item">
-                      <p className="comment-deleted">삭제된 댓글입니다.</p>
-                    </li>
-                  )
-                }
-
-                const mine = isCommentOwner(c)
-                const isEditing = editingCommentId === c.id
-
-                return (
-                  <li key={c.id} className="comment-item">
-                    <div className="post-meta">
-                      <LevelBadge level={c.authorLevel} compact />
-                      <span>{c.author}</span>
-                      <span>·</span>
-                      <span>{formatRelativeTime(c.createdAt)}</span>
-                      {c.edited && <span className="comment-edited">(수정됨)</span>}
-
-                      {(mine || admin) && !isEditing && (
-                        <span className="comment-actions">
-                          {mine && (
-                            <button type="button" className="btn-text comment-action-btn" onClick={() => startEditComment(c)}>
-                              수정
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            className="btn-text comment-action-btn post-delete-btn"
-                            onClick={() => handleCommentDelete(c.id)}
-                          >
-                            삭제{admin && !mine ? ' (운영자)' : ''}
-                          </button>
-                        </span>
-                      )}
-                    </div>
-
-                    {isEditing ? (
-                      <div className="comment-edit-form">
-                        <div className="field">
-                          <textarea rows={3} value={editText} onChange={(e) => setEditText(e.target.value)} />
-                        </div>
-                        <div className="comment-edit-buttons">
-                          <button type="button" className="btn-primary" onClick={() => handleCommentUpdate(c.id)}>
-                            저장
-                          </button>
-                          <button type="button" className="btn-text" onClick={cancelEditComment}>
-                            취소
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="comment-content">{linkify(c.content)}</p>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
+            <ul className="comment-list">{topLevelComments.map((c) => renderComment(c, false))}</ul>
 
             {commentError && <div className="error-banner comment-error">{commentError}</div>}
 
