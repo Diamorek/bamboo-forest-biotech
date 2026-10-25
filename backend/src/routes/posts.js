@@ -198,7 +198,7 @@ router.get('/:id', async (req, res) => {
     const post = postResult.rows[0];
 
     const commentsResult = await pool.query(
-      `SELECT c.id, c.user_id, c.content, c.created_at, c.edited_at, c.deleted_at, u.username,
+      `SELECT c.id, c.user_id, c.parent_id, c.content, c.created_at, c.edited_at, c.deleted_at, u.username,
               COALESCE(s.current_level, 1) AS author_level
        FROM comments c
        JOIN users u ON u.id = c.user_id
@@ -219,8 +219,10 @@ router.get('/:id', async (req, res) => {
       createdAt: post.created_at,
       likeCount: post.like_count,
       // 삭제된 댓글은 내용/작성자를 아예 내려주지 않고 "삭제됨" 표시만 남겨요
+      // parentId는 삭제된 댓글도 그대로 내려줘요 (답글 묶음에서 빠지지 않게)
       comments: commentsResult.rows.map((c) => ({
         id: c.id,
+        parentId: c.parent_id,
         authorId: c.deleted_at ? null : c.user_id,
         author: c.deleted_at ? null : c.username,
         authorLevel: c.deleted_at ? null : c.author_level,
@@ -334,7 +336,7 @@ router.post('/:id/report', authMiddleware, async (req, res) => {
   }
 });
 
-// 댓글 작성 (로그인 필요)
+// 댓글 작성 (로그인 필요) — body에 parentId를 보내면 대댓글(답글)
 router.post('/:id/comments', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const content = (req.body.content || '').trim();
@@ -346,23 +348,52 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
     return res.status(400).json({ message: '댓글은 1000자 이하로 입력해주세요.' });
   }
 
+  // parentId가 없으면(없음/null/빈 문자열) 맨 위 댓글, 있으면 대댓글
+  const rawParent = req.body.parentId;
+  let parentId = null;
+  if (rawParent !== undefined && rawParent !== null && rawParent !== '') {
+    const parentStr = String(rawParent);
+    if (!/^\d{1,10}$/.test(parentStr) || Number(parentStr) < 1 || Number(parentStr) > 2147483647) {
+      return res.status(400).json({ message: '답글을 달 댓글이 올바르지 않습니다.' });
+    }
+    parentId = Number(parentStr);
+  }
+
   try {
     const postResult = await pool.query('SELECT id FROM posts WHERE id = $1', [id]);
     if (postResult.rows.length === 0) {
       return res.status(404).json({ message: '게시글을 찾을 수 없습니다.' });
     }
 
+    if (parentId !== null) {
+      const parentResult = await pool.query(
+        'SELECT post_id, parent_id FROM comments WHERE id = $1',
+        [parentId]
+      );
+      const parent = parentResult.rows[0];
+
+      // 존재하는 댓글이고, 같은 글의 댓글이어야 해요
+      // (부모가 삭제된 댓글이어도 허용: 삭제 표시 아래에 답글이 이어져요)
+      if (!parent || parent.post_id !== postResult.rows[0].id) {
+        return res.status(400).json({ message: '답글을 달 댓글을 찾을 수 없습니다.' });
+      }
+      // 맨 위 댓글(parent_id가 비어 있는 댓글)에만 답글 가능 (1단계까지)
+      if (parent.parent_id !== null) {
+        return res.status(400).json({ message: '답글에는 다시 답글을 달 수 없습니다.' });
+      }
+    }
+
     const result = await pool.query(
-      `INSERT INTO comments (post_id, user_id, content)
-       VALUES ($1, $2, $3)
-       RETURNING id, content, created_at`,
-      [id, req.user.userId, content]
+      `INSERT INTO comments (post_id, user_id, content, parent_id)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, content, created_at, parent_id`,
+      [id, req.user.userId, content, parentId]
     );
     const row = result.rows[0];
 
     const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [req.user.userId]);
 
-    // 댓글이 정상 저장된 뒤에만 포인트 지급 (지급이 실패해도 댓글 작성은 성공 처리)
+    // 댓글이 정상 저장된 뒤에만 포인트 지급 (대댓글도 일반 댓글과 같은 규칙, 실패해도 작성은 성공 처리)
     const points = await awardPointsSafe({
       userId: req.user.userId,
       eventType: 'comment',
@@ -374,6 +405,7 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
     res.status(201).json({
       comment: {
         id: row.id,
+        parentId: row.parent_id,
         authorId: req.user.userId,
         author: userResult.rows[0].username,
         authorLevel: points.level ?? null,
@@ -459,7 +491,7 @@ router.patch('/:id/comments/:commentId', authMiddleware, async (req, res) => {
     const result = await pool.query(
       `UPDATE comments SET content = $1, edited_at = NOW()
        WHERE id = $2
-       RETURNING id, content, created_at,
+       RETURNING id, content, created_at, parent_id,
                  COALESCE((SELECT current_level FROM user_point_stats WHERE user_id = comments.user_id), 1) AS author_level`,
       [content, commentId]
     );
@@ -470,6 +502,7 @@ router.patch('/:id/comments/:commentId', authMiddleware, async (req, res) => {
     res.json({
       comment: {
         id: row.id,
+        parentId: row.parent_id,
         authorId: req.user.userId,
         author: userResult.rows[0].username,
         authorLevel: row.author_level,
