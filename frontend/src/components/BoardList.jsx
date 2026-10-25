@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { formatRelativeTime } from '../utils/formatDate'
-import { getLastSeenId, markPostsSeen, useNewPostsCount } from '../utils/newPosts.js'
-import LevelBadge from './LevelBadge.jsx'
+import { getUser } from '../utils/auth'
+import { getLastSeenId, markPostsSeen, useNewPostsCount } from '../utils/newPosts'
+import LevelBadge from './LevelBadge'
 import './Board.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -61,7 +62,7 @@ const MOCK_POSTS = [
 function BoardList({ onSelectPost, onWriteClick }) {
   const [posts, setPosts] = useState([])
   const [activeCategory, setActiveCategory] = useState('all')
-  const [sortMode, setSortMode] = useState('latest') // 'latest' | 'hot'
+  const [sortMode, setSortMode] = useState('latest') // 'latest' | 'hot' | 'mine'
   const [hotPeriod, setHotPeriod] = useState('week') // 'week' | 'month' | 'year'
   const [loading, setLoading] = useState(true)
   const [reloadKey, setReloadKey] = useState(0) // "새 글 불러오기"를 눌렀을 때 +1
@@ -147,6 +148,22 @@ function BoardList({ onSelectPost, onWriteClick }) {
 
   const PERIOD_DAYS = { week: 7, month: 30, year: 365 }
 
+  const currentUser = getUser()
+
+  // "내 글"을 보다가 로그아웃하면 탭이 사라지니까 최신순으로 되돌려요
+  const loggedIn = Boolean(currentUser)
+  useEffect(() => {
+    if (!loggedIn && sortMode === 'mine') setSortMode('latest')
+  }, [loggedIn, sortMode])
+
+  // "내 글": 글쓴이 번호(authorId)가 오면 그걸로, 없으면 닉네임으로 비교해요
+  // (게시글 상세의 본인 확인과 같은 방식 — 닉네임을 바꿨어도 번호가 있으면 정확해요)
+  const isMine = (p) => {
+    if (!currentUser) return false
+    if (p.authorId != null && currentUser.id != null) return String(p.authorId) === String(currentUser.id)
+    return Boolean(currentUser.username) && p.author === currentUser.username
+  }
+
   // "핫 글": 기간(최근 n일) 안의 글만, (좋아요+댓글수) 합산 점수로 정렬.
   // 서버 안 건드리고 이미 받아온 목록에서 계산해요.
   const displayedPosts =
@@ -159,7 +176,9 @@ function BoardList({ onSelectPost, onWriteClick }) {
             return created.getTime() >= cutoff
           })
           .sort((a, b) => (b.likeCount + b.commentCount) - (a.likeCount + a.commentCount))
-      : filteredPosts
+      : sortMode === 'mine'
+        ? filteredPosts.filter(isMine)
+        : filteredPosts
 
   const categoryLabel = (id) => CATEGORIES.find((c) => c.id === id)?.label ?? id
 
@@ -217,7 +236,7 @@ function BoardList({ onSelectPost, onWriteClick }) {
             className={`top-nav-tab ${sortMode === 'latest' ? 'is-active' : ''}`}
             onClick={() => setSortMode('latest')}
           >
-            최신순
+            🕒 최신순
           </button>
           <button
             className={`top-nav-tab ${sortMode === 'hot' ? 'is-active' : ''}`}
@@ -225,6 +244,14 @@ function BoardList({ onSelectPost, onWriteClick }) {
           >
             🔥 핫 글
           </button>
+          {currentUser && (
+            <button
+              className={`top-nav-tab ${sortMode === 'mine' ? 'is-active' : ''}`}
+              onClick={() => setSortMode('mine')}
+            >
+              ✍️ 내 글
+            </button>
+          )}
         </div>
 
         {sortMode === 'hot' && (
@@ -254,9 +281,11 @@ function BoardList({ onSelectPost, onWriteClick }) {
         <div className="board-empty">
           {searchResults !== null
             ? `'${searchQuery}'에 대한 결과가 없어요.`
-            : sortMode === 'hot'
-              ? '이 기간엔 핫 글이 없어요.'
-              : '아직 이 분류엔 글이 없어요. 첫 글을 남겨보세요.'}
+            : sortMode === 'mine'
+              ? '내가 쓴 글이 없어요. 새 글을 남겨보세요.'
+              : sortMode === 'hot'
+                ? '이 기간엔 핫 글이 없어요.'
+                : '아직 이 분류엔 글이 없어요. 첫 글을 남겨보세요.'}
         </div>
       ) : (
         <ul className="post-list">
