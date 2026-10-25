@@ -24,6 +24,10 @@ function App() {
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [editingPost, setEditingPost] = useState(null)
 
+  // 게시판 화면에서 로그아웃하면 화면 이름이 그대로('board')라 React가 다시 그리지 않아요.
+  // 번호를 올려서 로그인/로그아웃 상태가 바뀌면 항상 화면을 다시 그리게 해요.
+  const [, setAuthVersion] = useState(0)
+
   const currentUser = getUser()
 
   // 앱을 열 때 하루 첫 방문 포인트 기록 (로그인 상태일 때만, 서버가 하루 1회만 지급)
@@ -38,6 +42,7 @@ function App() {
 
   const handleLogout = () => {
     clearSession()
+    setAuthVersion((v) => v + 1)
     setView('board')
   }
 
