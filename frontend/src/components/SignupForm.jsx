@@ -72,10 +72,11 @@ function SignupForm({ onSignupSuccess, onNavigateToLogin }) {
         <BambooIcon size={32} className="auth-mark" />
         <h1 className="auth-title">숲에 들어가기</h1>
         <p className="auth-subtitle">
-          ✓ 이메일은 로그인 용도로만 사용해요 <br />
-          ✓ 인증 메일 없이 바로 가입돼요 <br />
-          ✓ 외부에 공개되지 않아요 <br />
-          ✓ 닉네임만 남고, 나머지는 숲이 지켜드려요</p>
+          ✓ 이메일은 로그인 용도로만 사용돼요 <br />
+          ✓ 메일 인증 없이 1초 만에 가입돼요 <br />
+          ✓ 수집된 정보는 외부에 절대 공개되지 않아요 <br />
+          ✓ 활동 시 닉네임만 노출되며, 나머지는 숲이 지켜드려요</p>
+          ✓ 작성자의 IP는 시스템에 절대 저장되지 않아요</p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && <div className="error-banner">{error}</div>}
