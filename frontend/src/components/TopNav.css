@@ -30,6 +30,7 @@
   font-size: 13px;
   color: var(--text-dim);
   margin: 2px 0 0;
+  word-break: keep-all;
 }
 
 .top-nav-tabs {
