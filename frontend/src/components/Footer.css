@@ -21,3 +21,13 @@
 .site-footer a:hover {
   text-decoration: underline;
 }
+
+.site-footer__links {
+  margin-top: 6px !important;
+}
+
+.site-footer .btn-text {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-decoration: underline;
+}
