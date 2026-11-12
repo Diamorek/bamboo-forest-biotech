@@ -5,6 +5,7 @@ import TopNav from './components/TopNav'
 import Footer from './components/Footer'
 import BossKey from './components/BossKey'
 import LevelUpModal from './components/LevelUpModal'
+import PrivacyModal from './components/PrivacyModal'
 import LoginForm from './components/LoginForm'
 import SignupForm from './components/SignupForm'
 import BoardList from './components/BoardList'
@@ -132,6 +133,7 @@ function App() {
       <Footer />
       <BossKey />
       <LevelUpModal />
+      <PrivacyModal />
     </>
   )
 }
