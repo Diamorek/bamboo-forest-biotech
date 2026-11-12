@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import BambooIcon from './BambooIcon'
 import { setSession } from '../utils/auth'
+import { openPrivacyPolicy } from '../utils/privacy'
+import { CONTACT_EMAIL } from './privacyConfig'
 import './AuthForm.css'
+import './Privacy.css'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -72,11 +75,12 @@ function SignupForm({ onSignupSuccess, onNavigateToLogin }) {
         <BambooIcon size={32} className="auth-mark" />
         <h1 className="auth-title">숲에 들어가기</h1>
         <p className="auth-subtitle">
-          ✓ 이메일은 로그인 용도로만 사용돼요 <br />
+          ✓ 이메일은 로그인과 계정 관리 용도로만 사용돼요 <br />
           ✓ 메일 인증 없이 1초 만에 가입돼요 <br />
-          ✓ 수집된 정보는 외부에 절대 공개되지 않아요 <br />
+          ✓ 이메일과 비밀번호는 다른 이용자에게 공개되지 않아요 (비밀번호는 암호화되어 운영자도 볼 수 없어요) <br />
           ✓ 활동 시 닉네임만 노출되며, 나머지는 숲이 지켜드려요 <br />
-          ✓ 작성자의 IP는 시스템에 절대 저장되지 않아요</p>
+          ✓ 글과 댓글에 작성자의 IP를 저장하지 않아요
+        </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && <div className="error-banner">{error}</div>}
@@ -127,6 +131,22 @@ function SignupForm({ onSignupSuccess, onNavigateToLogin }) {
               placeholder="비밀번호 다시 입력"
               autoComplete="new-password"
             />
+          </div>
+
+          <div className="privacy-notice">
+            <p className="privacy-notice__title">⚠️ 개인정보 고지 안내</p>
+            <p>
+              입력하신 정보(이메일, 닉네임, 암호화된 비밀번호)는 서비스 이용계약의 체결과 이행을 위한 필수 항목이며, 회원 탈퇴
+              시까지 보유한 뒤 지체 없이 파기돼요. 동의하지 않을 권리가 있지만, 이 경우 가입이 제한돼요.
+            </p>
+            <p>서버와 데이터베이스는 해외(싱가포르·미국)에서 운영돼요. 자세한 내용은 개인정보 처리방침에서 볼 수 있어요.</p>
+            <p>
+              ✉️ 개인정보 삭제(탈퇴)는 가입한 이메일로 <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> 에 요청해
+              주세요. 확인 후 5일 이내에 처리해요.
+            </p>
+            <button type="button" className="btn-text" onClick={openPrivacyPolicy}>
+              개인정보 처리방침 전체보기
+            </button>
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading}>
